@@ -25,6 +25,7 @@ import { REQUIREMENT_SELECT } from '../rounds/requirements.service';
 import { RoundPhaseService } from '../rounds/round-phase.service';
 import { statusForSeats } from './group-seats';
 import { QueryMyGroupDto } from './dto/query-my-group.dto';
+import { QuerySupervisedGroupsDto } from './dto/query-supervised-groups.dto';
 import { RegisterTopicDto } from './dto/register-topic.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import {
@@ -372,6 +373,50 @@ export class RegistrationGroupsService {
     if (!membership) return null;
 
     return this.present(membership.groupId, { studentId: student.id });
+  }
+
+  /**
+   * All active groups on this lecturer's topics.
+   *
+   * "Active" means not REJECTED: a group that walked away is kept on record, but
+   * a supervisor's working view is the groups still doing the work, not the
+   * history of every group that ever touched a topic. A group the office disbanded
+   * to start over would show here only while it was live.
+   *
+   * The semester filter defaults to the active one — the same default `findMine`
+   * uses — because a lecturer asking "show me my groups" means this semester.
+   * Passing an explicit semesterId lets them look back.
+   */
+  async findSupervisedGroups(query: QuerySupervisedGroupsDto, userId: number) {
+    const lecturer = await this.prisma.lecturerProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!lecturer) {
+      throw new NotFoundException('Lecturer profile not found');
+    }
+
+    const semesterId =
+      query.semesterId ?? (await this.requireActiveSemesterId());
+
+    const groups = await this.prisma.registrationGroup.findMany({
+      where: {
+        semesterId,
+        status: { not: RegistrationGroupStatus.REJECTED },
+        topic: { lecturerId: lecturer.id },
+      },
+      select: GROUP_SELECT,
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const viewer: Viewer = {
+      studentId: null,
+      lecturerId: lecturer.id,
+      role: Role.LECTURER,
+    };
+
+    return groups.map((group) => this.render(group, viewer));
   }
 
   /**

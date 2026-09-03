@@ -13,6 +13,7 @@ import { Role } from '../../generated/prisma/client';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { QueryMyGroupDto } from './dto/query-my-group.dto';
+import { QuerySupervisedGroupsDto } from './dto/query-supervised-groups.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { RegistrationGroupsService } from './registration-groups.service';
 
@@ -49,6 +50,22 @@ export class RegistrationGroupsController {
   @Post('join/:code')
   joinByCode(@Param('code') code: string, @GetUser('id') userId: number) {
     return this.groups.joinByCode(code, userId);
+  }
+
+  /**
+   * All active groups on topics this lecturer supervises, for the requested
+   * semester (defaulting to the active one).
+   *
+   * Declared before `:id` on purpose — Nest matches in order, so the
+   * parameterised route below would otherwise swallow this path.
+   */
+  @Roles('LECTURER')
+  @Get('my-supervised')
+  findSupervisedGroups(
+    @Query() query: QuerySupervisedGroupsDto,
+    @GetUser('id') userId: number,
+  ) {
+    return this.groups.findSupervisedGroups(query, userId);
   }
 
   @Get(':id')
