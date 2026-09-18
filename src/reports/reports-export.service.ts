@@ -3,7 +3,6 @@ import ExcelJS from 'exceljs';
 import { formatDate } from '../common/named-day.util';
 import { ReportsService, type FacultyReport } from './reports.service';
 
-/** What each phase is called in a sheet somebody prints and hands round. */
 const PHASE_LABEL: Record<string, string> = {
   PREP: 'Chưa mở',
   OPEN: 'Đang mở',
@@ -12,18 +11,6 @@ const PHASE_LABEL: Record<string, string> = {
   FINALIZED: 'Đã chốt',
 };
 
-/**
- * The report as a workbook.
- *
- * Three sheets rather than one, because the three sections count different
- * things and putting them under one header row would produce a table where half
- * the columns are blank on every row. A sheet each is also what somebody does
- * with it next: the supervision sheet gets sent to the head of faculty, the
- * registration sheet goes into the end-of-term report.
- *
- * Built from the same call the screen reads, so the file cannot disagree with
- * what the office was looking at when they pressed the button.
- */
 @Injectable()
 export class ReportsExportService {
   constructor(private readonly reports: ReportsService) {}
@@ -79,13 +66,6 @@ export class ReportsExportService {
     head(sheet);
   }
 
-  /**
-   * Two tables on one sheet, separated by a blank row.
-   *
-   * They answer the same question — how the term is spread — from two sides, and
-   * a reader comparing "thầy nào nhiều nhất" against "ngành nào đông nhất" wants
-   * them in front of each other rather than a tab apart.
-   */
   private supervisionSheet(workbook: ExcelJS.Workbook, report: FacultyReport) {
     const sheet = workbook.addWorksheet('Phân bổ');
 
@@ -158,12 +138,6 @@ export class ReportsExportService {
   }
 }
 
-/**
- * Makes a header row look like one, and freezes the sheet's own first row.
- *
- * Given a worksheet it treats row 1 as the header; given a row it just emboldens
- * that row, which is what the second table on a shared sheet needs.
- */
 function head(target: ExcelJS.Worksheet | ExcelJS.Row) {
   if ('getRow' in target) {
     target.getRow(1).font = { bold: true };

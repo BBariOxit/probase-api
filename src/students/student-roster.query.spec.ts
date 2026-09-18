@@ -1,18 +1,6 @@
 import { rosterWhere } from './student-roster.query';
 
-/**
- * Two screens read this: the faculty's whole student list, and the left-hand
- * column of the allocation desk. They look nothing alike, and until now each
- * carried its own copy of one sentence — "has a topic this term" — which is
- * exactly the kind of duplication that ends with two screens reporting different
- * numbers about the same student and nobody able to say which is right.
- *
- * `rosterWhere` is pure, so these are ordinary function calls. What they pin
- * down is not query syntax but the definition itself: which memberships count,
- * which do not, and what each filter is allowed to do to the others.
- */
 describe('rosterWhere', () => {
-  /** The shape both `some` and `none` are built from. */
   const liveIn = (semesterId: number) => ({
     semesterId,
     status: 'ACCEPTED',
@@ -32,12 +20,6 @@ describe('rosterWhere', () => {
       expect(where.groupMemberships).toEqual({ none: liveIn(7) });
     });
 
-    /**
-     * The two halves have to be the negation of one another. If "has a group"
-     * and "has no group" were built from different membership shapes, a student
-     * could satisfy both or neither — and the faculty list and the allocation
-     * desk would disagree about whether they still need placing.
-     */
     it('uses one definition for both directions', () => {
       const has = rosterWhere({ semesterId: 3, hasGroup: true });
       const hasNot = rosterWhere({ semesterId: 3, hasGroup: false });
@@ -51,10 +33,6 @@ describe('rosterWhere', () => {
       expect(rosterWhere({ semesterId: 3 }).groupMemberships).toBeUndefined();
     });
 
-    /**
-     * A rejected group has handed its topic back, so its members are not holding
-     * anything — they are exactly the students the office still has to place.
-     */
     it('does not count a membership in a rejected group', () => {
       const where = rosterWhere({ semesterId: 1, hasGroup: true });
       const some = (where.groupMemberships as { some: { group: unknown } })
@@ -63,12 +41,6 @@ describe('rosterWhere', () => {
       expect(some.group).toEqual({ status: { not: 'REJECTED' } });
     });
 
-    /**
-     * Without a term, the question becomes "has this student ever held a place",
-     * which is a different question and the wrong one for both callers. It is
-     * still allowed to build, because the roster can legitimately be read across
-     * every term — what must not happen is a semester being silently invented.
-     */
     it('omits the term rather than guessing one', () => {
       const where = rosterWhere({ hasGroup: false });
       const none = (where.groupMemberships as { none: object }).none;
@@ -84,12 +56,6 @@ describe('rosterWhere', () => {
       });
     });
 
-    /**
-     * An empty list means "no intake has been declared for this round", which is
-     * not the same as "every intake" — so it must not quietly drop out and widen
-     * the query. The callers refuse before reaching here; this makes sure the
-     * builder would not have papered over it either.
-     */
     it('ignores an empty intake list rather than matching everybody by accident', () => {
       expect(rosterWhere({ cohorts: [] }).cohort).toBeUndefined();
     });
@@ -108,12 +74,6 @@ describe('rosterWhere', () => {
       });
     });
 
-    /**
-     * Supervision reaches through the group to the topic, so filtering by
-     * lecturer implies holding a place — a student with no group has no
-     * supervisor to be filtered by, and returning them would be answering a
-     * different question.
-     */
     it('reaches a supervisor through the group that holds their topic', () => {
       const where = rosterWhere({ semesterId: 5, lecturerId: 9 });
       const some = (

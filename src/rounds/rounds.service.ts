@@ -45,15 +45,6 @@ type RoundRow = Prisma.RegistrationRoundGetPayload<{
   select: typeof ROUND_SELECT;
 }>;
 
-/**
- * The phases in which the schedule is still a schedule.
- *
- * Past these, moving the closing date is not an edit but a reopening, and it has
- * to go through `extend` — where it acquires an author, a reason and a log
- * entry. Silently accepting the edit here would be the worst of the options: it
- * either does nothing while the caller believes they have extended the round, or
- * it reopens a gate with no record of who did it.
- */
 const SCHEDULE_EDITABLE_PHASES: readonly RoundPhase[] = [
   RoundPhase.PREP,
   RoundPhase.OPEN,
@@ -106,7 +97,6 @@ export class RoundsService {
     return (await this.renderMany([round]))[0];
   }
 
-  /** Every round of one semester — the faculty's plan for that term. */
   async findForSemester(semesterId: number) {
     await this.requireSemester(semesterId);
 
@@ -119,13 +109,6 @@ export class RoundsService {
     return this.renderMany(rounds);
   }
 
-  /**
-   * The kinds of project this particular caller may take in a semester.
-   *
-   * What the browse screen needs to default its filter to. Staff have no intake,
-   * so they see everything — the rule exists to steer students, not to hide the
-   * catalogue from the people running it.
-   */
   async findEligibleProjectTypes(
     semesterId: number,
     userId: number,
@@ -152,14 +135,6 @@ export class RoundsService {
     return rounds.map((round) => round.projectType);
   }
 
-  /**
-   * The rounds this caller's intake may take part in, as ids.
-   *
-   * Fails closed: an account with no intake on file, or an office that has not
-   * declared anything yet, gets an empty list rather than everything. The filter
-   * exists to show a student what is actually theirs, and guessing generously
-   * here would defeat it.
-   */
   async eligibleRoundIds(userId: number, semesterIds?: number[]) {
     const cohort = await this.cohortOf(userId);
     if (!cohort) return [];
@@ -175,15 +150,6 @@ export class RoundsService {
     return rows.map((row) => row.roundId);
   }
 
-  /**
-   * The round a topic of this kind belongs to in this semester.
-   *
-   * A lecturer choosing a kind of project *is* choosing the round, so there is
-   * no separate field for it — and writing a topic for something the faculty has
-   * not opened is refused here rather than left to sit in the catalogue, where
-   * every student pressing register would be turned away for a reason that has
-   * nothing to do with them.
-   */
   async requireRoundFor(semesterId: number, projectTypeId: number) {
     const round = await this.prisma.registrationRound.findUnique({
       where: { semesterId_projectTypeId: { semesterId, projectTypeId } },
@@ -201,13 +167,6 @@ export class RoundsService {
 
   // ── write ─────────────────────────────────────────────────
 
-  /**
-   * Replaces a semester's registration plan wholesale.
-   *
-   * Declaring an intake is what creates a round, so this one call is the whole
-   * of "open the semester": the office sends what the rule should be, and
-   * working out which rows that implies is this method's job, not theirs.
-   */
   async setSemesterRounds(
     semesterId: number,
     dto: SetSemesterRoundsDto,
@@ -334,7 +293,6 @@ export class RoundsService {
     return this.findForSemester(semesterId);
   }
 
-  /** Adjust one round without resending the semester's whole plan. */
   async update(id: number, dto: UpdateRoundDto) {
     const round = await this.loadRow(id);
     const phase = await this.phases.resolve(id);
@@ -369,17 +327,6 @@ export class RoundsService {
     return this.findOne(id);
   }
 
-  /**
-   * Reopen a closed round for the students who ended up without a group.
-   *
-   * Only from RECONCILING, and only forward in time. The extension is a new
-   * `registrationEnd` plus a phase saying which window this is, so it ends by
-   * itself — there is no second button to press, and therefore none to forget.
-   *
-   * Placing students by hand stays shut while it runs (see the faculty office's
-   * desk): with the gate open the list of students without a group moves under
-   * the hand of whoever is working it.
-   */
   async extend(id: number, dto: ExtendRoundDto, userId: number) {
     const round = await this.loadRow(id);
     const phase = await this.phases.resolve(id);
@@ -447,20 +394,6 @@ export class RoundsService {
     return extended;
   }
 
-  /**
-   * Reopen the allocation of a round that has already been settled.
-   *
-   * A real registry does not offer "cannot be undone" — it offers "undo leaves a
-   * mark", because a round sealed on a mistake is not a hypothetical. What comes
-   * back is the office's desk: the phase returns to RECONCILING, placing and
-   * unplacing work again, and the topics this round set running go back on
-   * offer so seats can be counted.
-   *
-   * Nobody is notified. Every student in the round was told their allocation was
-   * final, and an "actually, not yet" that is immediately followed by the same
-   * result would be two notices for one outcome; whoever unlocked the round is
-   * about to change something, and finalising again is what announces it.
-   */
   async unlock(id: number, dto: UnlockRoundDto, userId: number) {
     const phase = await this.phases.resolve(id);
 
@@ -515,18 +448,6 @@ export class RoundsService {
 
   // ── internals ─────────────────────────────────────────────
 
-  /**
-   * Tells the students an extension was granted for.
-   *
-   * This is not decoration on the feature — it is most of it. An extension that
-   * nobody hears about reaches only the students who happen to open the app
-   * again, and those are the ones who least needed a second chance. Everybody
-   * else finds out when they are told which topic the faculty put them on.
-   *
-   * Only students with no group are written to: the extension changes nothing
-   * for anyone else, and a notice that turns out to mean nothing teaches people
-   * to ignore the next one.
-   */
   private async announceExtension(round: {
     id: number;
     semesterId: number;
@@ -572,11 +493,6 @@ export class RoundsService {
     });
   }
 
-  /**
-   * Brings every row's phase up to date before it goes out, so a client cannot
-   * be told a round is still OPEN by the very endpoint whose job is to report
-   * its state.
-   */
   private async renderMany(rounds: RoundRow[]) {
     const phases = await this.phases.resolveMany(rounds);
 
@@ -587,15 +503,6 @@ export class RoundsService {
     }));
   }
 
-  /**
-   * Puts the round the student is actually registered in at the top, and the
-   * soonest deadline after it.
-   *
-   * A student eligible for two rounds has to be shown one of them first, and
-   * these two rules are the two answers that are never wrong: the round they
-   * have already chosen, or — if they have chosen none — the one they are about
-   * to miss.
-   */
   private async ownRoundFirst<T extends { id: number; registrationEnd: Date }>(
     rounds: T[],
     userId: number,
@@ -671,7 +578,6 @@ export class RoundsService {
   }
 }
 
-/** Whether a plan actually moves either end of the window. */
 function movesWindow(
   current: { registrationStart: Date; registrationEnd: Date },
   plan: { registrationStart: Date; registrationEnd: Date },

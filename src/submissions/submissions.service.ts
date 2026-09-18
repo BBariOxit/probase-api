@@ -25,17 +25,10 @@ import {
   SubmissionFeedbackDto,
 } from './dto/submission.dto';
 
-/**
- * Everything either side of a submission needs to read.
- *
- * `filePublicId` is deliberately absent: it is the storage provider's handle,
- * used to delete the file, and it is no more a caller's business than a row id
- * in someone else's table. The URL is what a reader follows.
- */
 const SUBMISSION_SELECT = {
   id: true,
   version: true,
-  /** What this was handed in against, and therefore what it was due by. */
+
   requirement: { select: REQUIREMENT_SELECT },
   fileUrl: true,
   fileName: true,
@@ -68,16 +61,6 @@ type SubmissionRow = Prisma.SubmissionGetPayload<{
   select: typeof SUBMISSION_SELECT;
 }>;
 
-/**
- * One submission as a caller reads it, with the deadline it was measured
- * against.
- *
- * Lateness is worked out here rather than stored on the row, and that is
- * deliberate: an office that pushes a deadline back means the work is no longer
- * late, and a stamped flag would go on saying it was. A deadline is a calendar
- * day, so it runs to the end of that day — comparing against its first instant
- * would mark a group late at seven in the morning of the day their work is due.
- */
 function present(submission: SubmissionRow) {
   const dueAt = submission.requirement.dueAt;
 
@@ -97,19 +80,6 @@ export class SubmissionsService {
     private readonly requirements: RequirementsService,
   ) {}
 
-  /**
-   * Hand something in.
-   *
-   * A group submits and a person presses the button, so the row records both:
-   * the group is what the work belongs to, and `submittedById` is who sent this
-   * particular version — the first question asked when two members disagree
-   * about what was handed in.
-   *
-   * Nothing is ever overwritten. A re-submission is a new row one version higher,
-   * because the previous one may already have been read and answered, and a
-   * supervisor's feedback pointing at a file that has since been replaced is
-   * feedback about something nobody can see any more.
-   */
   async create(
     dto: CreateSubmissionDto,
     file: Express.Multer.File | undefined,
@@ -176,13 +146,6 @@ export class SubmissionsService {
     }
   }
 
-  /**
-   * One list, read from whichever end the caller stands at.
-   *
-   * A student sees their own group's work and cannot ask for anybody else's — no
-   * filter here reaches past their own group, because the where clause is built
-   * from their token before any query parameter is applied.
-   */
   async findAll(query: QuerySubmissionsDto, userId: number, role: Role) {
     const where: Prisma.SubmissionWhereInput = {
       ...(query.requirementId && { requirementId: query.requirementId }),
@@ -232,13 +195,6 @@ export class SubmissionsService {
     };
   }
 
-  /**
-   * The supervisor's answer to one version.
-   *
-   * Written against the version it was about rather than against the group, so
-   * a student who re-submits does not silently inherit feedback on the file they
-   * replaced.
-   */
   async giveFeedback(id: number, dto: SubmissionFeedbackDto, userId: number) {
     const lecturer = await this.requireLecturer(userId);
     const submission = await this.prisma.submission.findFirst({
@@ -311,13 +267,6 @@ export class SubmissionsService {
     return lecturer;
   }
 
-  /**
-   * The group this student is working in, across every term they have one in.
-   *
-   * Not narrowed to the active semester on purpose: a report belongs to the
-   * topic it was written for, and a student reading last term's feedback after
-   * the office has opened the next term should still find it.
-   */
   private async findOwnGroup(studentId: number) {
     const membership = await this.prisma.registrationGroupMember.findFirst({
       where: {

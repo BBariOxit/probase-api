@@ -8,7 +8,6 @@ import { recordAudit } from '../audit/audit-entry';
 import { PrismaService } from '../prisma/prisma.service';
 import { SetRequirementsDto } from './dto/set-requirements.dto';
 
-/** Everything a caller reads about one required document. */
 export const REQUIREMENT_SELECT = {
   id: true,
   name: true,
@@ -17,24 +16,10 @@ export const REQUIREMENT_SELECT = {
   sortOrder: true,
 } satisfies Prisma.SubmissionRequirementSelect;
 
-/**
- * What each round asks its groups to hand in, and by when.
- *
- * The office keeps this list, not individual supervisors, and that is a rule
- * rather than an accident of where the screen ended up. Two students of one
- * intake whose deadlines differ because they chose different supervisors is a
- * complaint the faculty cannot answer; and once every supervisor sets their own
- * dates, "how far along is this round" has no answer at all, because a group
- * that looks behind may simply have a later deadline. A supervisor's own
- * arrangement with their group — send me chapter two by Friday — is a different
- * thing, and when it is built it becomes rows scoped to a group rather than to
- * a round.
- */
 @Injectable()
 export class RequirementsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** The list for one round, in the order the office arranged it. */
   async findForRound(roundId: number) {
     await this.requireRound(roundId);
 
@@ -45,15 +30,6 @@ export class RequirementsService {
     });
   }
 
-  /**
-   * Replaces a round's list wholesale.
-   *
-   * The one refusal worth naming: a document groups have already handed work in
-   * against cannot be taken off the list. Removing it would delete their
-   * submissions along with whatever their supervisor wrote on them — so the
-   * office is told which rows are in the way rather than discovering afterwards
-   * that a week of feedback is gone.
-   */
   async setForRound(roundId: number, dto: SetRequirementsDto, actorId: number) {
     await this.requireRound(roundId);
 
@@ -153,14 +129,6 @@ export class RequirementsService {
     return this.findForRound(roundId);
   }
 
-  /**
-   * The requirement a group is handing in against, refusing anything that is
-   * not their round's.
-   *
-   * A group reaches its round through its topic, and nothing in the database
-   * ties a requirement to a group directly — so this is the check that keeps a
-   * student from submitting against another đợt's deadline by sending its id.
-   */
   async requireForRound(requirementId: number, roundId: number) {
     const requirement = await this.prisma.submissionRequirement.findFirst({
       where: { id: requirementId, roundId },

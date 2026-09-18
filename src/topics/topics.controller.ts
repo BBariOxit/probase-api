@@ -22,10 +22,6 @@ import { TopicsService } from './topics.service';
 export class TopicsController {
   constructor(private readonly topicsService: TopicsService) {}
 
-  /**
-   * Open to every signed-in role, but not to the same extent: the service
-   * narrows a student's view to published topics before it queries.
-   */
   @Get()
   findAll(
     @Query() query: QueryTopicsDto,
@@ -35,11 +31,6 @@ export class TopicsController {
     return this.topicsService.findAll(query, userId, role);
   }
 
-  /**
-   * Declared before the `:id` route on purpose. Nest matches in order, so the
-   * parameterised route would otherwise swallow this path and hand
-   * ParseIntPipe the string "lecturers".
-   */
   @Get('lecturers')
   findLecturers(
     @Query() query: QueryTopicLecturersDto,

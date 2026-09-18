@@ -21,44 +21,24 @@ import { RegistrationGroupsService } from './registration-groups.service';
 export class RegistrationGroupsController {
   constructor(private readonly groups: RegistrationGroupsService) {}
 
-  /**
-   * Declared before `:id` on purpose — Nest matches in order, so the
-   * parameterised route below would otherwise swallow these paths and hand
-   * ParseIntPipe the string "me".
-   */
   @Roles('STUDENT')
   @Get('me')
   findMine(@Query() query: QueryMyGroupDto, @GetUser('id') userId: number) {
     return this.groups.findMine(query, userId);
   }
 
-  /**
-   * What a link leads to. Read-only, so the page can show the topic and who is
-   * already in the group before the visitor spends their one registration.
-   */
   @Roles('STUDENT')
   @Get('join/:code')
   previewByCode(@Param('code') code: string, @GetUser('id') userId: number) {
     return this.groups.previewByCode(code, userId);
   }
 
-  /**
-   * Join by link. POST rather than GET because it changes something, and the
-   * code stays in the path so the whole link is one thing to paste into a chat.
-   */
   @Roles('STUDENT')
   @Post('join/:code')
   joinByCode(@Param('code') code: string, @GetUser('id') userId: number) {
     return this.groups.joinByCode(code, userId);
   }
 
-  /**
-   * All active groups on topics this lecturer supervises, for the requested
-   * semester (defaulting to the active one).
-   *
-   * Declared before `:id` on purpose — Nest matches in order, so the
-   * parameterised route below would otherwise swallow this path.
-   */
   @Roles('LECTURER')
   @Get('my-supervised')
   findSupervisedGroups(
@@ -77,7 +57,6 @@ export class RegistrationGroupsController {
     return this.groups.findOne(id, userId, role);
   }
 
-  /** Leader only: name, whether to keep taking people, hold, handover. */
   @Roles('STUDENT')
   @Patch(':id')
   update(
@@ -94,7 +73,6 @@ export class RegistrationGroupsController {
     return this.groups.leave(id, userId);
   }
 
-  /** Leader only, and audited: taking someone's place away from them. */
   @Roles('STUDENT')
   @Delete(':id/members/:studentId')
   removeMember(
@@ -105,10 +83,6 @@ export class RegistrationGroupsController {
     return this.groups.removeMember(id, studentId, userId);
   }
 
-  /**
-   * ADMIN is here for the same reason it can edit any topic: the faculty office
-   * has to be able to clear up after a group that stopped answering.
-   */
   @Roles('STUDENT', 'ADMIN')
   @Delete(':id')
   disband(

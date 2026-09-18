@@ -11,50 +11,16 @@ import {
 import { endOfNamedDay, startOfNamedDay } from '../common/named-day.util';
 import { PrismaService } from '../prisma/prisma.service';
 
-/**
- * Reads — and where the calendar says so, advances — a registration round's
- * phase, and answers the two questions every registration action asks of it.
- *
- * Every such action is gated on the phase and nothing else. In particular it is
- * *not* also checked against `registrationStart` / `registrationEnd`: the phase
- * is the truth and the dates are only what moves it, so an office that opened
- * the gate early by moving the start date meant to open it, and a second check
- * against the dates would quietly overrule them.
- */
 @Injectable()
 export class RoundPhaseService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * The phase as of now, moving it along if the calendar says it should have.
-   *
-   * PREP → OPEN once `registrationStart` has passed, and OPEN → RECONCILING —
-   * or EXTENDED → RECONCILING — once `registrationEnd` has. The transitions the
-   * calendar can make on its own, and all of them made here rather than on a
-   * schedule: a phase that only changes when somebody looks is indistinguishable
-   * from one that changes on the stroke of the deadline, because nothing can
-   * observe the difference without asking, and asking is what moves it.
-   *
-   * FINALIZED is deliberately absent, and so is the way into EXTENDED. Ending
-   * RECONCILING means someone decided the placement work was done, and starting
-   * an extension means someone decided to reopen the gate — no date knows
-   * either.
-   */
   async resolve(roundId: number): Promise<RoundPhase> {
     const round = await this.load(roundId);
 
     return this.advance(round);
   }
 
-  /**
-   * Throws unless this student may take a topic or join a group in this round.
-   *
-   * Open in OPEN, and in EXTENDED only for a student who has no group. That
-   * asymmetry is the whole of an extension: the gate is shut in RECONCILING so
-   * that an allocation being assembled cannot move underneath the person
-   * assembling it, and a student with no group is in no allocation to disturb —
-   * they are the ones an extension exists for.
-   */
   async requireCanJoin(roundId: number, studentId: number): Promise<void> {
     const round = await this.load(roundId);
     const phase = await this.advance(round);
@@ -76,17 +42,6 @@ export class RoundPhaseService {
     throw new ConflictException(REFUSAL_BY_PHASE[phase]);
   }
 
-  /**
-   * Throws unless this student may still put a topic proposal to a lecturer.
-   *
-   * Wider at the front than `requireCanJoin` and identical at the back. PREP is
-   * the phase proposals are *for*: the gate is shut, the catalogue is being
-   * written, and a lecturer has time to read one — refusing then would leave the
-   * feature usable only in the fortnight when everybody is busy registering.
-   *
-   * The far end is the same rule for the same reason. Once the office is placing
-   * students, a new proposal could only become a topic nobody is allowed to take.
-   */
   async requireCanPropose(roundId: number, studentId: number): Promise<void> {
     const round = await this.load(roundId);
     const phase = await this.advance(round);
@@ -104,15 +59,6 @@ export class RoundPhaseService {
     throw new ConflictException(REFUSAL_BY_PHASE[phase]);
   }
 
-  /**
-   * Throws unless a lecturer may still turn a proposal into a topic.
-   *
-   * Accepting creates a topic, and a topic created after the gate has closed is
-   * one no student can register for — so this refuses rather than handing the
-   * lecturer a way to produce something that looks like a yes and behaves like a
-   * no. Rejecting stays possible in every phase: a student waiting on an answer
-   * deserves one whatever the calendar says.
-   */
   async requireCanAcceptProposal(roundId: number): Promise<void> {
     const phase = await this.resolve(roundId);
 
@@ -129,14 +75,6 @@ export class RoundPhaseService {
     );
   }
 
-  /**
-   * Throws unless a student may still take their own registration apart —
-   * leave, disband, hand a member their place back.
-   *
-   * OPEN and nothing else. An extension deliberately does not reopen this: the
-   * placement work of RECONCILING is built on who is in which group, and a
-   * member walking out during the extension would break exactly that.
-   */
   async requireCanLeave(roundId: number): Promise<void> {
     const phase = await this.resolve(roundId);
 
@@ -168,13 +106,6 @@ export class RoundPhaseService {
     return round;
   }
 
-  /**
-   * The same answer as `resolve`, for rows the caller has already loaded.
-   *
-   * A list endpoint holds everything the calculation needs — the phase and both
-   * dates are on the row — so re-reading each round one at a time would be a
-   * query per row to learn what is already in hand.
-   */
   async resolveMany<T extends PhaseRow>(
     rounds: T[],
   ): Promise<Map<number, RoundPhase>> {
@@ -226,7 +157,6 @@ export class RoundPhaseService {
   }
 }
 
-/** Everything the phase calculation needs, and nothing else. */
 interface PhaseRow {
   id: number;
   phase: RoundPhase;
@@ -234,26 +164,6 @@ interface PhaseRow {
   registrationEnd: Date;
 }
 
-/**
- * The phase the calendar implies, given the one on record.
- *
- * Only ever moves forward, and only out of the phases a date can leave.
- * RECONCILING and FINALIZED are returned unchanged: once the office is placing
- * students, or has finished, no date may undo that — a `registrationEnd` edited
- * to next week must not reopen a round whose allocation is being settled, which
- * is why reopening is a command with an author rather than a date.
- *
- * EXTENDED leaves on the same comparison as OPEN because an extension *is* a new
- * `registrationEnd`: the column moves forward and the phase records that the
- * window it describes is the second one. One date, one comparison, and no way
- * for an extension to outlive the deadline it was given.
- *
- * Both dates are days the office named, not instants, so the window runs from
- * midnight on the opening day to the end of the closing day — Vietnam time. Read
- * as bare timestamps they would open and close at seven in the morning, and a
- * gate announced as closing "ngày 02/09" would shut while students were having
- * breakfast on the 2nd.
- */
 export function duePhase(round: {
   phase: RoundPhase;
   registrationStart: Date;
@@ -276,13 +186,6 @@ export function duePhase(round: {
   return round.phase;
 }
 
-/**
- * Why a round is refused, named by phase.
- *
- * The message names the situation rather than saying "you cannot do that",
- * because the gate having closed and the gate not having opened yet call for
- * opposite reactions from the person reading it.
- */
 const REFUSAL_BY_PHASE: Record<
   Exclude<RoundPhase, 'OPEN' | 'EXTENDED'>,
   string

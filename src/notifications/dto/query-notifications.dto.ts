@@ -2,10 +2,6 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
 export const QueryNotificationsSchema = z.object({
-  /**
-   * A query string has no booleans, and `Boolean('false')` is true, so the value
-   * is matched literally rather than coerced.
-   */
   unreadOnly: z
     .enum(['true', 'false'])
     .optional()

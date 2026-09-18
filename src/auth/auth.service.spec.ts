@@ -7,12 +7,6 @@ import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
-/**
- * bcrypt is a native addon, and its exports are not configurable — `jest.spyOn`
- * cannot redefine them. Wrapping the real implementation in a `jest.fn` keeps
- * the comparisons genuine (these tests are about which hash gets compared, so a
- * stub would only measure the stub) while making the calls inspectable.
- */
 jest.mock('bcrypt', () => {
   const actual = jest.requireActual<typeof import('bcrypt')>('bcrypt');
   return {
@@ -26,27 +20,14 @@ jest.mock('bcrypt', () => {
   };
 });
 
-/** The comparison calls, typed so the assertions are not reaching into `any`. */
 const compare = bcrypt.compare as unknown as jest.Mock<
   Promise<boolean>,
   [data: string, hash: string]
 >;
 
-/**
- * The password used by every fixture account, and its real hash.
- *
- * A real bcrypt hash rather than a stub, because the point of most of these
- * tests is which hash `login` reaches for — comparing against a mock would
- * measure the mock.
- */
 const PASSWORD = 'Student@123';
 const PASSWORD_HASH = bcrypt.hashSync(PASSWORD, 10);
 
-/**
- * The one refusal every failed sign-in gets, named here because several tests
- * turn on it being the *same* refusal — an unknown address, a wrong password and
- * a deactivated account must not be distinguishable by what they say.
- */
 const WRONG_CREDENTIALS = 'Email hoặc mật khẩu không đúng';
 
 interface UserRow {
@@ -117,7 +98,6 @@ describe('AuthService password backoff', () => {
     service = module.get(AuthService);
   });
 
-  /** The `data` payload of the nth `user.update` call, 0-indexed. */
   function writtenData(nth: number) {
     const calls = update.mock.calls as [
       {
@@ -130,11 +110,6 @@ describe('AuthService password backoff', () => {
     return calls[nth][0].data;
   }
 
-  /**
-   * Stands in for `RETURNING failedPasswordCount`, which is what the service
-   * derives the delay from — the count it read before the increment is
-   * deliberately not used.
-   */
   function incrementYields(count: number) {
     update.mockResolvedValue({ failedPasswordCount: count });
   }

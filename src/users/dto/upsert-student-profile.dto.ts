@@ -3,15 +3,6 @@ import { z } from 'zod';
 import { checkClassCode } from '../class-code.util';
 import { cohortFromStudentCode } from '../student-code.util';
 
-/**
- * `cohort` is not an input here either. It is read out of the student code, so
- * that the one place a student's intake year comes from is the code itself —
- * an editable cohort field would let an admin correct a symptom while leaving
- * the code that produced it, and the two would disagree from then on.
- *
- * The email is not part of this payload (it lives on the User row), so the
- * code/email agreement is checked where accounts are created rather than here.
- */
 export const UpsertStudentProfileSchema = z
   .object({
     studentCode: z
@@ -34,7 +25,7 @@ export const UpsertStudentProfileSchema = z
     class: z.string().max(100).optional().nullable(),
     phone: z.string().max(20).optional().nullable(),
     bio: z.string().max(2000).optional().nullable(),
-    /** Faculty-office note. Free text by design — see StudentProfile.note. */
+
     note: z.string().max(2000).optional().nullable(),
   })
   // The same rule bulk import applies, so the hand-typed path cannot create the

@@ -30,18 +30,15 @@ import type { ImportRow } from './import/import-row.schema';
 import { parseImportFile } from './import/parse-import-file.util';
 import type { ParsedImportRow } from './import/parse-import-file.util';
 
-/** A row that passed validation and resolved its major, if it needed one. */
 interface ValidatedImportRow {
   rowNumber: number;
   data: ImportRow;
-  /** Resolved from majorCode on STUDENT rows; absent on LECTURER rows, which
-   *  have no master-data relation to resolve. */
+
   majorId?: number;
-  /** Things worth telling the admin about a row that was still accepted. */
+
   warnings?: string[];
 }
 
-/** A validated row that also has its generated credentials ready to insert. */
 interface PreparedImportRow extends ValidatedImportRow {
   tempPassword: string;
   passwordHash: string;
@@ -52,10 +49,9 @@ export interface BulkImportRowResult {
   email?: string;
   role?: 'STUDENT' | 'LECTURER';
   reason?: string;
-  /** Created rows only: whether the credentials email actually went out. */
+
   emailSent?: boolean;
-  /** Accepted, but with something the admin should look at — an unrecognised
-   *  class code, for instance. Absent when there was nothing to say. */
+
   warnings?: string[];
 }
 
@@ -63,17 +59,9 @@ export interface BulkImportResult {
   total: number;
   createdCount: number;
   failedCount: number;
-  /**
-   * Accounts that exist but whose credentials never reached anyone. The temp
-   * password is not recoverable, so each of these needs an admin
-   * reset-password before that user can log in — hence a top-level count
-   * rather than something the admin has to spot by scanning rows.
-   */
+
   emailsFailedCount: number;
-  /**
-   * Rows that imported with a caveat. Surfaced as a count so the admin knows to
-   * look without having to scan every accepted row for a `warnings` key.
-   */
+
   warnedCount: number;
   created: BulkImportRowResult[];
   failed: BulkImportRowResult[];
@@ -100,15 +88,6 @@ const USER_DETAIL_SELECT = {
   mustChangePassword: true,
 } as const;
 
-/**
- * P2002 reports that a unique constraint tripped, not which one. Knowing which
- * matters because the email pre-check and the insert are not atomic — a
- * concurrent request can take the address in between — and blaming that on a
- * duplicate student code sends the admin auditing the wrong column.
- *
- * Returns null when the error is not a unique-constraint violation at all, and
- * an empty array when the driver gave us nothing to work with.
- */
 function conflictingUniqueFields(err: unknown): string[] | null {
   if (!isUniqueViolation(err)) return null;
 
@@ -440,24 +419,6 @@ export class UsersService {
     });
   }
 
-  /**
-   * A role is only worth changing to one the account can actually be.
-   *
-   * Every relation in this system points at a profile, not at the account: a
-   * lecturer's topics hang off LecturerProfile, a student's groups off
-   * StudentProfile. Changing the role without one leaves an account its own role
-   * has no room for — a lecturer who cannot own a topic, a student who cannot
-   * join a group — and nothing downstream would notice until somebody tried.
-   *
-   * Refused rather than fixed up, because the profile cannot be created first:
-   * both profile endpoints check the current role, so the only order that could
-   * work is this one being blocked. In practice that means somebody genuinely
-   * changing what a person does gets a second account, which is the honest answer
-   * — their student record and their lecturer record are different people as far
-   * as every foreign key here is concerned. The one case this still allows is
-   * changing back: a lecturer briefly made an admin keeps their profile, so the
-   * mistake can be undone.
-   */
   private requireProfileForRole(
     role: Role,
     // Only whether each block is there, never what is in it.
@@ -479,18 +440,6 @@ export class UsersService {
 
   // ── remove ────────────────────────────────────────────────
 
-  /**
-   * Deactivates rather than deletes.
-   *
-   * A hard delete cannot survive contact with this schema: audit_logs.userId is
-   * ON DELETE RESTRICT precisely so a record of who changed a grade cannot be
-   * erased, and a student who has joined a group is held by RESTRICT there too.
-   * Removing an account that has done anything would therefore fail — and where
-   * it did succeed, it would take the audit trail with it.
-   *
-   * FR_ADM_01 asks for "khóa (deactivate)" alongside delete; this is that.
-   * Reactivation goes through PATCH /users/:id with isActive.
-   */
   async remove(id: number, actorId: number) {
     const user = await this.findOne(id);
 
@@ -688,10 +637,6 @@ export class UsersService {
 
   // ── Private helpers ──────────────────────────────────────
 
-  /**
-   * Writes the account and its role profile together, so a failed profile
-   * insert can never leave a bare, unusable User behind.
-   */
   private createAccountWithProfile(dto: CreateUserDto, passwordHash: string) {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -735,10 +680,6 @@ export class UsersService {
     });
   }
 
-  /**
-   * Validates and de-duplicates every row against one prefetch of the majors
-   * table. Pure CPU work beyond that single prefetch.
-   */
   private async validateImportRows(rows: ParsedImportRow[]): Promise<{
     valid: ValidatedImportRow[];
     failed: BulkImportRowResult[];
@@ -859,7 +800,6 @@ export class UsersService {
     return { valid, failed };
   }
 
-  /** Splits out rows whose address is already taken, in a single query. */
   private async rejectTakenEmails(rows: ValidatedImportRow[]): Promise<{
     valid: ValidatedImportRow[];
     failed: BulkImportRowResult[];
@@ -890,7 +830,6 @@ export class UsersService {
     return { valid, failed };
   }
 
-  /** Writes one imported account and its role profile atomically. */
   private insertAccount(row: PreparedImportRow) {
     const { data, majorId, passwordHash } = row;
 
@@ -933,7 +872,6 @@ export class UsersService {
     });
   }
 
-  /** Turns a failed row insert into something an admin can act on. */
   private describeCreateFailure(
     err: unknown,
     role: 'STUDENT' | 'LECTURER',

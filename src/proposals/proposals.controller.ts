@@ -21,14 +21,6 @@ import { QueryProposalsDto } from './dto/query-proposals.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { ProposalsService } from './proposals.service';
 
-/**
- * A student's idea, and a lecturer's answer to it.
- *
- * Both sides read `GET /proposals`: the token decides which end of the exchange
- * you are standing at, so there is no id in the query for anyone to swap. The
- * two answering routes are `@Roles('LECTURER')` because they are the only ones
- * where the role, rather than ownership, is the thing being checked.
- */
 @Controller('proposals')
 export class ProposalsController {
   constructor(private readonly proposalsService: ProposalsService) {}

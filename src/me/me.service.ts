@@ -12,15 +12,6 @@ import {
   type UpdateMyProfileDto,
 } from './dto/update-my-profile.dto';
 
-/**
- * What the caller may see about themselves.
- *
- * Written out field by field rather than taken whole. `StudentProfile` carries
- * `note` — the faculty office's private remarks about the student, "bảo lưu
- * HK1", "gọi không nghe máy" — and a `select: true` on that table hands it
- * straight back to the person it is about. That is how it used to leave through
- * `/auth/me`.
- */
 const STUDENT_FIELDS = {
   studentCode: true,
   fullName: true,
@@ -56,15 +47,6 @@ export class MeService {
     private readonly mentoring: MentoringLoadService,
   ) {}
 
-  /**
-   * The account and its one role block.
-   *
-   * Identity lives at the top — name, address, role, picture — because it is the
-   * same for all three roles and every screen that greets somebody wants exactly
-   * that. What differs by role goes underneath, in the block for that role, and
-   * the other block is null rather than absent so a client can tell "no lecturer
-   * profile" from "field not sent".
-   */
   async getProfile(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -92,15 +74,6 @@ export class MeService {
     };
   }
 
-  /**
-   * The quota, replaced by what it is a ceiling on.
-   *
-   * `maxMentoringQuota` on its own was a number the screen could only print —
-   * "hạn mức 6 nhóm mỗi kỳ" — while the system did nothing with it and the
-   * lecturer had no way to tell how close to it they were. Sending the load
-   * instead makes the same field answer the question people actually have, and
-   * matches the one the API now enforces when a proposal is accepted.
-   */
   private async withMentoringLoad(lecturer: LecturerRow | null) {
     if (!lecturer) return null;
 
@@ -122,12 +95,6 @@ export class MeService {
     };
   }
 
-  /**
-   * Whichever profile row belongs to this account, updated in place.
-   *
-   * An admin has neither row, so there is nothing here for them to edit — and
-   * saying so is better than accepting the request and changing nothing.
-   */
   async updateProfile(userId: number, dto: UpdateMyProfileDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -185,13 +152,6 @@ export class MeService {
     );
   }
 
-  /**
-   * Replace the caller's picture.
-   *
-   * The row is pointed at the new image before the old one is destroyed, so an
-   * interruption anywhere in here leaves an avatar that works. The reverse order
-   * would trade a leaked file for a broken image on every screen that shows it.
-   */
   async setAvatar(userId: number, file: Express.Multer.File) {
     const current = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -215,7 +175,6 @@ export class MeService {
     return user;
   }
 
-  /** Back to initials. Idempotent: removing an avatar nobody has is not an error. */
   async removeAvatar(userId: number) {
     const current = await this.prisma.user.findUnique({
       where: { id: userId },

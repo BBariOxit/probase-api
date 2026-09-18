@@ -34,13 +34,6 @@ import {
   isHoldActive,
 } from './join-code.util';
 
-/**
- * A group and everything a member needs to see about it.
- *
- * Members carry their class and major because that is what a group screen shows
- * about the people you are working with, and no contact details beyond the
- * account address — the same line the topic detail draws for lecturers.
- */
 const GROUP_SELECT = {
   id: true,
   topicId: true,
@@ -111,23 +104,12 @@ type GroupRow = Prisma.RegistrationGroupGetPayload<{
   select: typeof GROUP_SELECT;
 }>;
 
-/**
- * Which profile the caller reads a group through. Both ids are nullable because
- * an ADMIN has neither, and a role with a missing profile row has none either.
- */
 interface Viewer {
   studentId: number | null;
   lecturerId: number | null;
   role: Role | null;
 }
 
-/**
- * How many seats a stranger may not take, and how many they may.
- *
- * A single hold flag would be too blunt. A topic for three whose leader declared
- * two has one seat that was never theirs to keep, and holding it would let a
- * group of two sit on a third place it has already said it does not want.
- */
 function seatBreakdown(group: GroupRow) {
   const occupied = group.members.length;
   const capacity = group.topic.maxStudents;
@@ -143,24 +125,11 @@ function seatBreakdown(group: GroupRow) {
     capacity,
     holdActive,
     held,
-    /** Seats a stranger without the link could take right now. */
+
     freeToAnyone: Math.max(0, capacity - occupied - held),
   };
 }
 
-/**
- * A topic that grew out of a student's proposal belongs to that student.
- *
- * Without this, accepting a proposal publishes the idea to everybody: a freshly
- * approved topic is the newest unclaimed row on the browse screen, which is
- * exactly what students are looking for, and the person who thought of it can
- * lose it to somebody who read it thirty seconds ago.
- *
- * It needs no expiry of its own. Self-registration is only possible while the
- * round is OPEN or EXTENDED, so the reservation lapses the moment the gate
- * shuts — and from RECONCILING the faculty office may place anyone here, which
- * is the point at which an unclaimed topic should be fair game.
- */
 function requireProposerOrFree(
   topic: { sourceProposal: { studentId: number } | null },
   studentId: number,
@@ -183,13 +152,6 @@ export class RegistrationGroupsService {
 
   // ── register ──────────────────────────────────────────────
 
-  /**
-   * Take a topic: the group is created and the caller leads it.
-   *
-   * Registering and creating a group are one action, so there is no endpoint
-   * that makes an empty group — a group with no topic is a state this model does
-   * not have.
-   */
   async register(topicId: number, dto: RegisterTopicDto, userId: number) {
     const student = await this.requireStudent(userId);
     const topic = await this.requireRegistrableTopic(topicId);
@@ -250,11 +212,6 @@ export class RegistrationGroupsService {
 
   // ── join ──────────────────────────────────────────────────
 
-  /**
-   * Join whoever already holds this topic, without a link.
-   *
-   * Refused while seats are held, which is the whole point of holding them.
-   */
   async joinTopic(topicId: number, userId: number) {
     const student = await this.requireStudent(userId);
 
@@ -282,7 +239,6 @@ export class RegistrationGroupsService {
     });
   }
 
-  /** Join through a group's link, which reaches the seats being held. */
   async joinByCode(joinCode: string, userId: number) {
     const student = await this.requireStudent(userId);
     const group = await this.requireGroupByCode(joinCode);
@@ -294,19 +250,6 @@ export class RegistrationGroupsService {
     });
   }
 
-  /**
-   * What a link leads to, before the person following it commits to it.
-   *
-   * A join link gets pasted into a group chat and forwarded, and joining spends
-   * a student's single registration for the whole semester — so tapping a link
-   * must not be the act that spends it. This is what lets the page show the topic,
-   * the supervisor and who is already in before offering the button.
-   *
-   * Whether the caller may actually join is answered by running the very checks
-   * the POST runs and reporting what they said, rather than by a second copy of
-   * the rules. A preview that can disagree with the action it previews is worse
-   * than no preview: it turns the button into a trap.
-   */
   async previewByCode(joinCode: string, userId: number) {
     const student = await this.requireStudent(userId);
     const group = await this.requireGroupByCode(joinCode);
@@ -354,7 +297,6 @@ export class RegistrationGroupsService {
 
   // ── read ──────────────────────────────────────────────────
 
-  /** The caller's own group this semester, or null if they have none yet. */
   async findMine(query: QueryMyGroupDto, userId: number) {
     const student = await this.requireStudent(userId);
     const semesterId =
@@ -375,18 +317,6 @@ export class RegistrationGroupsService {
     return this.present(membership.groupId, { studentId: student.id });
   }
 
-  /**
-   * All active groups on this lecturer's topics.
-   *
-   * "Active" means not REJECTED: a group that walked away is kept on record, but
-   * a supervisor's working view is the groups still doing the work, not the
-   * history of every group that ever touched a topic. A group the office disbanded
-   * to start over would show here only while it was live.
-   *
-   * The semester filter defaults to the active one — the same default `findMine`
-   * uses — because a lecturer asking "show me my groups" means this semester.
-   * Passing an explicit semesterId lets them look back.
-   */
   async findSupervisedGroups(query: QuerySupervisedGroupsDto, userId: number) {
     const lecturer = await this.prisma.lecturerProfile.findUnique({
       where: { userId },
@@ -419,16 +349,6 @@ export class RegistrationGroupsService {
     return groups.map((group) => this.render(group, viewer));
   }
 
-  /**
-   * Readable by the group's own members, the supervising lecturer, and the
-   * faculty office — and by nobody else, which is why an outsider gets a 404
-   * rather than a 403.
-   *
-   * A student deciding whether to join does not need this: the topic detail
-   * already tells them how many seats are taken and whether they may have one.
-   * What it withholds is the members' names, and that is the point — a signed-in
-   * student has no reason to be able to enumerate who is working on what.
-   */
   async findOne(id: number, userId: number, role: Role) {
     const viewer = await this.resolveViewer(userId, role);
     const group = await this.loadGroup(id);
@@ -493,14 +413,6 @@ export class RegistrationGroupsService {
     return this.present(id, { studentId: student.id });
   }
 
-  /**
-   * Remove somebody from the group.
-   *
-   * Audited, because it is the only power one student holds over another in this
-   * system: a leader can take a place away from someone who thought they had
-   * one, and a faculty asked about it later needs an answer that is not "we
-   * think so".
-   */
   async removeMember(id: number, studentId: number, userId: number) {
     const student = await this.requireStudent(userId);
     const group = await this.requireLeadership(id, student.id);
@@ -558,19 +470,6 @@ export class RegistrationGroupsService {
     return this.present(id, { studentId: student.id });
   }
 
-  /**
-   * Give the topic back.
-   *
-   * REJECTED rather than deleted: the row is the record that this group existed
-   * and walked away, and the partial unique index ignores REJECTED, so the topic
-   * returns to the market on its own.
-   *
-   * The members must come down in the same transaction. The two partial indexes
-   * do not know about each other — the one keeping a student to a single group
-   * looks only at `status = 'ACCEPTED'`, not at whether the group still stands —
-   * so a group left REJECTED with ACCEPTED members hands the topic back while
-   * every one of its students stays locked out of registering again.
-   */
   async disband(id: number, userId: number, role: Role) {
     let group: GroupRow;
 
@@ -647,13 +546,6 @@ export class RegistrationGroupsService {
 
   // ── internals ─────────────────────────────────────────────
 
-  /**
-   * Recomputes the group's status from what is actually in the table.
-   *
-   * Counted inside the transaction rather than derived from the copy loaded
-   * before it: somebody may have joined in between, and a status worked out from
-   * a stale roster would leave a full group reading as still forming.
-   */
   private async syncStatus(
     tx: Prisma.TransactionClient,
     groupId: number,
@@ -669,15 +561,6 @@ export class RegistrationGroupsService {
     });
   }
 
-  /**
-   * Adds a member with the group row locked.
-   *
-   * Everything else in this model leans on a unique index instead of a lock, but
-   * no index can count a group's seats, so two students taking the last one at
-   * the same moment would both pass a check-then-insert and leave a topic for
-   * three with four students on it. `FOR UPDATE` serialises exactly the callers
-   * contending for this one group and nothing else.
-   */
   private async addMember(
     groupId: number,
     student: { id: number; fullName: string },
@@ -760,7 +643,6 @@ export class RegistrationGroupsService {
     return this.present(groupId, { studentId });
   }
 
-  /** Reload and shape a group for the student who just changed it. */
   private async present(id: number, viewer: { studentId: number }) {
     const group = await this.loadGroup(id);
 
@@ -782,13 +664,6 @@ export class RegistrationGroupsService {
     return group;
   }
 
-  /**
-   * Shapes a group for one particular reader.
-   *
-   * The join code is the only field that varies: it is a secret that keeps a
-   * stranger out of a held seat, so handing it to a stranger would undo the
-   * mechanism it protects.
-   */
   private render(group: GroupRow, viewer: Viewer) {
     const seats = seatBreakdown(group);
     const { joinCode, members, topic, ...rest } = group;
@@ -880,20 +755,6 @@ export class RegistrationGroupsService {
     return group;
   }
 
-  /**
-   * Registration hangs off StudentProfile, not User: an account with no profile
-   * is half-created rather than authorised, and every downstream relation —
-   * membership, grades, defence — points at the profile.
-   */
-  /**
-   * Refuses early if this student already belongs to a group this semester.
-   *
-   * The database enforces the rule regardless — that is what makes it hold when
-   * a thousand students press the same button at once — but a stale browser tab
-   * is far commoner than a race, and reaching the constraint means the message
-   * has to be reconstructed from a driver error. Asking first gives the ordinary
-   * case a plain answer and leaves the index doing what only it can.
-   */
   private async requireNoExistingGroup(studentId: number, semesterId: number) {
     const existing = await this.prisma.registrationGroupMember.findFirst({
       where: {
@@ -930,15 +791,6 @@ export class RegistrationGroupsService {
     return group;
   }
 
-  /**
-   * Every rule standing between a student and a group, in one place.
-   *
-   * Shared by the join endpoints and by the preview so the two cannot drift.
-   * The seat checks here are advisory — `addMember` repeats them holding a row
-   * lock, which is the only place they are authoritative — but running them now
-   * turns "full" into a plain answer rather than something reconstructed after a
-   * transaction has already rolled back.
-   */
   private async assertJoinable(
     group: GroupRow,
     student: { id: number; cohort: string | null },
@@ -1010,12 +862,6 @@ export class RegistrationGroupsService {
     return topic;
   }
 
-  /**
-   * Whether this student's intake may take this kind of project this semester.
-   *
-   * Checked here and not only in the interface, because the browse screen's
-   * default filter is a convenience and this is the rule.
-   */
   private async requireEligible(
     topic: { roundId: number; round: { projectType: { name: string } } },
     cohort: string | null,
@@ -1066,15 +912,6 @@ export class RegistrationGroupsService {
     return semester.id;
   }
 
-  /**
-   * Turns the two partial unique indexes into answers a student can act on.
-   *
-   * Both are enforced by the database rather than by a count, which is what
-   * makes them correct when a thousand students press the same button in the
-   * same second — but P2002 says only that something was unique, so the index
-   * name is what distinguishes "somebody beat you to this topic" from "you are
-   * already in a group".
-   */
   private translateRegistrationConflict(err: unknown): unknown {
     if (!isUniqueViolation(err)) return err;
 

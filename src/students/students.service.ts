@@ -8,13 +8,6 @@ import {
   type RosterRow,
 } from './student-roster.service';
 
-/**
- * The faculty's students, as the office reads them.
- *
- * Everything here is admin-only, and the reason is one column: `note` is the
- * office's private remark about a student, and it is the one field in this
- * system that must never reach the person it is about.
- */
 @Injectable()
 export class StudentsService {
   constructor(
@@ -42,14 +35,6 @@ export class StudentsService {
     };
   }
 
-  /**
-   * The same list as a spreadsheet, and deliberately the same list: it takes the
-   * filters the screen is showing, so what comes out of the file is what the
-   * office was looking at when they pressed the button.
-   *
-   * Unpaginated, because a page of twenty-five is a property of a screen and not
-   * of the question being asked.
-   */
   async exportAll(query: QueryStudentsDto): Promise<Buffer> {
     const filters = await this.toFilters(query);
     const rows = await this.roster.find(filters);
@@ -84,14 +69,6 @@ export class StudentsService {
     return Buffer.from(file);
   }
 
-  /**
-   * Query parameters as roster filters.
-   *
-   * The only translation worth naming is `roundId` → intakes: a đợt is declared
-   * against a set of cohorts, so filtering by it means filtering by the intakes
-   * it covers. Reading that here rather than in the query builder keeps the
-   * builder pure and testable.
-   */
   private async toFilters(query: QueryStudentsDto): Promise<RosterFilters> {
     const semesterId = query.semesterId ?? (await this.activeSemesterId());
 
@@ -134,7 +111,6 @@ export class StudentsService {
   }
 }
 
-/** One roster row, flattened into the cells a spreadsheet has. */
 function toSheetRow(row: RosterRow) {
   return {
     studentCode: row.studentCode,

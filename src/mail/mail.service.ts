@@ -17,12 +17,6 @@ const ROLE_LABELS: Record<MailableRole, string> = {
   STUDENT: 'Sinh viên',
 };
 
-/**
- * Names and addresses reach us from admin-uploaded spreadsheets, so they are
- * untrusted text landing in an HTML document. Escaping keeps a name like
- * `Trần <Anh> & Co` rendering as written rather than collapsing the layout —
- * or injecting markup into mail we send out under the system's name.
- */
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -52,7 +46,6 @@ export class MailService {
     );
   }
 
-  /** Resolves false when delivery failed; never throws. */
   async sendAccountCreated(payload: CredentialsEmailPayload): Promise<boolean> {
     return this.sendCredentialsEmail({
       payload,
@@ -62,7 +55,6 @@ export class MailService {
     });
   }
 
-  /** Resolves false when delivery failed; never throws. */
   async sendPasswordReset(payload: CredentialsEmailPayload): Promise<boolean> {
     return this.sendCredentialsEmail({
       payload,
@@ -73,10 +65,6 @@ export class MailService {
     });
   }
 
-  /**
-   * The self-service reset link. Carries no password — only a one-time URL, so
-   * an intercepted message is useless once the link is spent or expires.
-   */
   async sendPasswordResetLink(payload: {
     to: string;
     fullName?: string;
@@ -104,13 +92,6 @@ export class MailService {
     });
   }
 
-  /**
-   * Sent after a password actually changes.
-   *
-   * Every other control tries to prevent an account takeover; this one makes
-   * sure the owner finds out about one. It is the only signal reaching someone
-   * whose account was reset by another person.
-   */
   async sendPasswordChangedNotice(payload: {
     to: string;
     fullName?: string;
@@ -139,7 +120,6 @@ export class MailService {
     });
   }
 
-  /** Single delivery path: log the outcome, never throw. */
   private async send(args: {
     to: string;
     fullName?: string;
@@ -194,7 +174,7 @@ export class MailService {
     fullName?: string;
     email: string;
     tempPassword: string;
-    /** Built in this service from fixed copy — intentionally carries markup. */
+
     introText: string;
   }): string {
     return this.renderShell({
@@ -224,11 +204,6 @@ export class MailService {
             </td></tr></table>`;
   }
 
-  /**
-   * The chrome every message shares. `bodyHtml` is markup this service builds
-   * itself; anything originating from a user must already have been escaped by
-   * the caller before it gets here.
-   */
   private renderShell(data: {
     fullName?: string;
     introText: string;

@@ -5,16 +5,6 @@ import {
 } from '../../generated/prisma/client';
 import { markTopicsBackOnOffer, markTopicsUnderway } from './topic-lifecycle';
 
-/**
- * What is worth pinning down here is not that the statuses change — it is which
- * topics are left alone.
- *
- * Both of these run over a whole round in one statement, so a filter that is
- * slightly too wide does not fail: it quietly rewrites topics nobody asked
- * about. The two cases that matter are a topic nobody registered on, and a topic
- * its supervisor never opened — the second especially, because reopening one
- * would let the office place a student on a topic nobody agreed to supervise.
- */
 describe('topic lifecycle', () => {
   function transaction() {
     const updateMany = jest.fn().mockResolvedValue({ count: 3 });

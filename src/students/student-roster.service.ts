@@ -8,20 +8,6 @@ import {
   type RosterFilters,
 } from './student-roster.query';
 
-/**
- * One answer to "which students, and what are they working on".
- *
- * Two screens ask it: the faculty's whole roster, and the left-hand column of
- * the allocation desk — which is this list with a term, a set of intakes and
- * "no group" pinned. They look nothing alike and should not share a component,
- * but they must share this, because the alternative is two definitions of what
- * counts as having a topic and, sooner or later, two screens reporting different
- * numbers about the same student.
- *
- * Not paginated at this level. The roster pages because a faculty has hundreds;
- * the desk does not because the office works the whole list in one sitting. The
- * caller decides, and passes it through.
- */
 @Injectable()
 export class StudentRosterService {
   constructor(private readonly prisma: PrismaService) {}
@@ -51,13 +37,6 @@ export class StudentRosterService {
   }
 }
 
-/**
- * The at-most-one membership flattened into the field a reader actually wants.
- *
- * An array of one is how the constraint is expressed, not something every screen
- * should have to unwrap — and unwrapping it in two places is how one of them
- * eventually reads `[0]` on an empty array.
- */
 function render(row: {
   id: number;
   studentCode: string;

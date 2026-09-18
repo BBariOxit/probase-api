@@ -16,14 +16,7 @@ export const QueryTopicsSchema = z.object({
     .enum(['true', 'false'])
     .optional()
     .transform((value) => value === 'true'),
-  /**
-   * Narrow to the kinds of project the caller's own intake may take.
-   *
-   * A boolean rather than a list of project-type ids, because the mapping from
-   * intake to project type is a faculty rule the API already holds — asking the
-   * client to send the answer would mean trusting it to have looked the rule up
-   * correctly, and a stale tab would then quietly widen the list.
-   */
+
   forMyCohort: z
     .enum(['true', 'false'])
     .optional()

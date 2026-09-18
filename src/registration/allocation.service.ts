@@ -25,23 +25,6 @@ import { StudentRosterService } from '../students/student-roster.service';
 import { FinalizeRoundDto, PlaceStudentDto } from './dto/allocation.dto';
 import { statusForSeats } from './group-seats';
 
-/**
- * The faculty office's desk: the students the gate closed on, and the seats left
- * to put them in.
- *
- * This is the only path into a registration group that is not a student acting
- * for themselves, and it deliberately steps over four rules that path enforces —
- * a group that shut its door, seats a leader was holding, a topic reserved for
- * the student who proposed it, and the phase gate itself. Every one of those
- * exists to protect students from each other while the gate is open. Once it has
- * shut none of them is still standing: the holds have lapsed, the reservation is
- * over by its own terms, and there is nobody left to race.
- *
- * Which is exactly why the whole controller is `@Roles('ADMIN')` and why this
- * service is not exported from its module. It is not a more powerful version of
- * registering; it is a different action, performed by somebody else, in a phase
- * where students can do nothing at all.
- */
 @Injectable()
 export class AllocationService {
   constructor(
@@ -51,15 +34,6 @@ export class AllocationService {
     private readonly roster: StudentRosterService,
   ) {}
 
-  /**
-   * Everything the desk shows, in one read.
-   *
-   * Readable in any phase rather than only in RECONCILING: an office watching a
-   * round run down wants to know how many students are still without a topic
-   * long before it can do anything about them, and a screen that refuses to load
-   * until the deadline passes is one nobody trusts on the day. What the phase
-   * decides is `canPlace`, which is about the buttons.
-   */
   async desk(roundId: number) {
     const round = await this.requireRound(roundId);
     const phase = await this.phases.resolve(roundId);
@@ -85,47 +59,25 @@ export class AllocationService {
         cohorts: round.eligibilities.map((rule) => rule.cohort),
       },
       canPlace: phase === RoundPhase.RECONCILING,
-      /** Why the buttons are missing, in the phases where they are. */
+
       blockedReason:
         phase === RoundPhase.RECONCILING ? null : PLACEMENT_CLOSED[phase],
       summary: {
         unplacedCount: students.length,
         openSeats,
-        /**
-         * How many students there is provably nowhere to put. The first number
-         * the office looks for, and the one that decides whether this is an
-         * afternoon of clicking or a morning of phone calls.
-         */
+
         shortfall: Math.max(0, students.length - openSeats),
-        /**
-         * Approved topics whose supervisor never opened them — the only slack
-         * left when the seats run out. Reported rather than used: opening a
-         * topic is the supervisor's decision, and the office reaching past them
-         * to do it would be arranging somebody's teaching without asking.
-         */
+
         unopenedTopics: unopened.length,
         unopenedSeats: sumSeats(unopened),
       },
       students,
       topics: open,
-      /**
-       * What this desk has already done, newest first.
-       *
-       * Without it the screen has no way back: a placed student leaves the
-       * unplaced list and a filled topic leaves the seats list, so a misclick
-       * would become invisible the moment it was made — and the undo endpoint
-       * would be one nothing could reach.
-       */
+
       placements,
     };
   }
 
-  /**
-   * Put one student on one topic.
-   *
-   * Creates the group when the topic has none — the student leads it, exactly as
-   * if they had registered it themselves — and joins the existing one otherwise.
-   */
   async place(roundId: number, dto: PlaceStudentDto, adminUserId: number) {
     const round = await this.requirePlaceableRound(roundId);
     const student = await this.requirePlaceableStudent(dto.studentId, round);
@@ -230,14 +182,6 @@ export class AllocationService {
     };
   }
 
-  /**
-   * Undo a placement.
-   *
-   * Only ever the office's own: a student who chose a topic themselves is not
-   * the office's to move, and the request is refused rather than quietly
-   * treated as a removal. Whoever is standing at this desk is correcting their
-   * own work, not overruling somebody else's.
-   */
   async unplace(roundId: number, studentId: number, adminUserId: number) {
     await this.requirePlaceableRound(roundId);
     const member = await this.requireOwnPlacement(roundId, studentId);
@@ -326,18 +270,6 @@ export class AllocationService {
     };
   }
 
-  /**
-   * Close the round: every membership in it becomes the official record, and
-   * every topic a group took starts counting as work under way.
-   *
-   * The last state change a round makes, and the only one no date can make for
-   * it — ending RECONCILING means somebody decided the placement work was done,
-   * which is why the row records who and when.
-   *
-   * The topics move inside the same transaction as the phase, so a round can
-   * never end up settled with its topics still advertising registration. Getting
-   * that back is `RoundsService.unlock`.
-   */
   async finalize(roundId: number, dto: FinalizeRoundDto, adminUserId: number) {
     const round = await this.requireRound(roundId);
     const phase = await this.phases.resolve(roundId);
@@ -415,22 +347,6 @@ export class AllocationService {
 
   // ── the two lists ─────────────────────────────────────────
 
-  /**
-   * Students this round covers who have nowhere to be.
-   *
-   * Asked of the shared roster rather than queried here, and that is the whole
-   * reason the roster exists: the faculty's student list asks the same question
-   * with different filters, and two implementations of "has a topic this term"
-   * are two screens that will one day report different numbers about the same
-   * student.
-   *
-   * "Covers" is by intake, because that is the only thing a round is declared
-   * against. Having a group is checked across the whole semester rather than
-   * within this round: a student holds one place per term, so somebody already
-   * on a Cơ sở topic is not waiting for a Tốt nghiệp seat — they are done. That
-   * also means two rounds in one semester share a single pool of students, and
-   * a student placed at one desk disappears from the other.
-   */
   private async unplacedStudents(round: RoundRow) {
     const cohorts = round.eligibilities.map((rule) => rule.cohort);
 
@@ -445,13 +361,6 @@ export class AllocationService {
     });
   }
 
-  /**
-   * Placements this desk has made in this round, newest first.
-   *
-   * Only the office's own — `joinSource: ASSIGNED` — because those are the only
-   * ones it may take back, and a list mixing them with students who chose for
-   * themselves would offer an undo on two thirds of it that the API refuses.
-   */
   private async placementsMade(roundId: number) {
     const members = await this.prisma.registrationGroupMember.findMany({
       where: {
@@ -487,10 +396,6 @@ export class AllocationService {
     }));
   }
 
-  /**
-   * Topics in this round that still have room, open ones and unopened ones
-   * together — the caller splits them, because they are two different offers.
-   */
   private async topicsWithSeats(roundId: number) {
     const topics = await this.prisma.topic.findMany({
       where: {
@@ -556,7 +461,6 @@ export class AllocationService {
     return round;
   }
 
-  /** The round, and the phase in which placing anybody is allowed at all. */
   private async requirePlaceableRound(roundId: number) {
     const round = await this.requireRound(roundId);
     const phase = await this.phases.resolve(roundId);
@@ -641,7 +545,6 @@ export class AllocationService {
     return topic;
   }
 
-  /** A placement this desk made, and therefore one it may take back. */
   private async requireOwnPlacement(roundId: number, studentId: number) {
     const member = await this.prisma.registrationGroupMember.findFirst({
       where: {
@@ -686,14 +589,6 @@ export class AllocationService {
 
   // ── writes and notices ────────────────────────────────────
 
-  /**
-   * The group a placed student lands in when the topic had none.
-   *
-   * Closed to joining and with no invite link, unlike a group a student
-   * registers: there is nobody left to invite once the gate has shut, and a
-   * link that outlived an extension would be a way back in that nobody meant
-   * to leave open.
-   */
   private async openGroupFor(
     tx: Prisma.TransactionClient,
     topic: { id: number; semesterId: number; maxStudents: number },
@@ -744,14 +639,6 @@ export class AllocationService {
     ]);
   }
 
-  /**
-   * What the round settled into, told to both kinds of reader it produced.
-   *
-   * The students it found nothing for are notified too, and that is the half
-   * that matters: the app has been promising them "bạn sẽ nhận được thông báo
-   * khi kết quả được chốt" since the gate closed, and being left out is exactly
-   * the outcome somebody would otherwise discover in week three.
-   */
   private async announceOutcome(
     roundId: number,
     unplaced: { userId: number }[],
@@ -794,7 +681,6 @@ type RoundRow = {
   eligibilities: { cohort: string }[];
 };
 
-/** Why the desk is read-only, named by the phase it is read-only in. */
 const PLACEMENT_CLOSED: Record<Exclude<RoundPhase, 'RECONCILING'>, string> = {
   [RoundPhase.PREP]:
     'Cổng đăng ký chưa mở, nên chưa có ai để xếp — sinh viên vẫn đang chờ đến lượt chọn đề tài.',
@@ -810,10 +696,6 @@ function sumSeats(topics: { freeSeats: number }[]): number {
   return topics.reduce((total, topic) => total + topic.freeSeats, 0);
 }
 
-/**
- * The two collisions worth naming, in the words of somebody working a desk
- * rather than of a student pressing register.
- */
 function translatePlacementConflict(err: unknown): unknown {
   if (err instanceof ConflictException || err instanceof NotFoundException) {
     return err;

@@ -27,11 +27,6 @@ export class RoundsController {
     private readonly requirements: RequirementsService,
   ) {}
 
-  /**
-   * Readable by every signed-in role. A round carries the faculty's own
-   * announcement — which intakes, from when to when — and a student cannot plan
-   * around a schedule they are not allowed to see.
-   */
   @Get()
   findAll(
     @Query() query: QueryRoundsDto,
@@ -52,13 +47,6 @@ export class RoundsController {
     return this.roundsService.update(id, dto);
   }
 
-  /**
-   * Reopen a closed round for the students left without a group.
-   *
-   * The faculty office's call and nobody else's: it overrides a deadline the
-   * whole faculty was told about, and every group already formed keeps running
-   * underneath it.
-   */
   @Roles('ADMIN')
   @Post(':id/extend')
   extend(
@@ -69,30 +57,11 @@ export class RoundsController {
     return this.roundsService.extend(id, dto, userId);
   }
 
-  /**
-   * Reopen the allocation of a round that has already been settled.
-   *
-   * Admin only, and the narrowest door in this controller: it takes back an
-   * outcome every student in the round has already been told is final. What
-   * makes that acceptable is the record it leaves — who, when, and the reason
-   * they had to type.
-   */
-  /**
-   * What this round's groups must hand in, and by when.
-   *
-   * Readable by everyone signed in — it is the faculty's own announcement, and
-   * a student cannot plan around a deadline they are not allowed to see.
-   */
   @Get(':id/requirements')
   findRequirements(@Param('id', ParseIntPipe) id: number) {
     return this.requirements.findForRound(id);
   }
 
-  /**
-   * Replaces that list. The faculty office's, not a supervisor's: two students
-   * of one intake with different deadlines because they chose different
-   * supervisors is a complaint nobody can answer.
-   */
   @Roles('ADMIN')
   @Put(':id/requirements')
   setRequirements(

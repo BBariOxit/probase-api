@@ -17,12 +17,6 @@ export class SemestersService {
     private readonly rounds: RoundsService,
   ) {}
 
-  /**
-   * The terms themselves. Registration state is not here on purpose: a semester
-   * runs several rounds at once and they open, close and settle independently,
-   * so there is no single "is registration open" to report at this level. Ask
-   * `/rounds` for that.
-   */
   findAll() {
     return this.prisma.semester.findMany({
       orderBy: { startDate: 'desc' },

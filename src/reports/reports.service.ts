@@ -10,25 +10,23 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RoundPhaseService } from '../rounds/round-phase.service';
 import { StudentRosterService } from '../students/student-roster.service';
 
-/** How one round of the term went, in the numbers the faculty asks for. */
 export interface RoundReport {
   roundId: number;
   projectType: { id: number; name: string; code: string };
   phase: RoundPhase;
   cohorts: string[];
-  /** Students of this round's intakes, on active accounts. */
+
   eligible: number;
   withGroup: number;
   withoutGroup: number;
-  /** Chose their own topic, whether from the list or through a join link. */
+
   selfRegistered: number;
-  /** Put on a topic by the faculty office during RECONCILING. */
+
   assigned: number;
   topics: number;
   topicsUnderway: number;
 }
 
-/** How much supervising one lecturer took on this term. */
 export interface SupervisionReport {
   lecturerId: number;
   fullName: string;
@@ -37,7 +35,6 @@ export interface SupervisionReport {
   students: number;
 }
 
-/** How one major's students are placed. */
 export interface MajorReport {
   majorId: number;
   name: string;
@@ -46,18 +43,17 @@ export interface MajorReport {
   withGroup: number;
 }
 
-/** How far one round's groups have got with handing work in. */
 export interface ProgressReport {
   roundId: number;
   projectType: { id: number; name: string; code: string };
   groups: number;
-  /** How many documents the office declared as required for this round. */
+
   required: number;
-  /** Groups that have handed in every one of them. */
+
   complete: number;
-  /** Groups whose newest submission has not been answered by their supervisor. */
+
   awaitingFeedback: number;
-  /** Per document, so the office can see which one the round is stuck on. */
+
   items: {
     requirementId: number;
     name: string;
@@ -75,34 +71,11 @@ export interface FacultyReport {
   progress: ProgressReport[];
 }
 
-/** A membership that still counts: accepted, in a group nobody turned down. */
 const LIVE_MEMBERSHIP = {
   status: GroupMemberStatus.ACCEPTED,
   group: { status: { not: RegistrationGroupStatus.REJECTED } },
 };
 
-/**
- * The term in numbers, for the faculty office.
- *
- * Three questions, and they are not the same question at three scopes. How the
- * registration went is asked **per round** and never summed: a semester runs Cơ
- * sở, Chuyên ngành and Tốt nghiệp side by side for three different intakes,
- * sharing no seat, so "42% xếp tay in học kỳ 1" adds numbers that cannot be
- * added and hides the one round that went badly. How the supervising is spread
- * is asked **per term**, because a lecturer taking two groups in two rounds is
- * carrying two groups. And what has been handed in is per round again, because
- * the deadlines are.
- *
- * Nothing here counts grades. Marking does not exist yet, and a report that
- * printed a column of empty cells would be worse than one that does not offer
- * it: it would look like every student had no grade rather than like the
- * question had not been asked.
- *
- * The whole thing is one read of six queries rather than one per row. That
- * matters less for the milliseconds than for the arithmetic — every number below
- * is counted from the same snapshot, so two of them can never disagree about how
- * many students there are.
- */
 @Injectable()
 export class ReportsService {
   constructor(
@@ -157,13 +130,6 @@ export class ReportsService {
 
   // ── the three sections ────────────────────────────────────
 
-  /**
-   * One row per round: who it covered, how many of them found a topic, and how
-   * many of those the office had to place by hand.
-   *
-   * That last pair is the number the faculty asks for every year, and the only
-   * real measure of whether letting students choose is working.
-   */
   private async registrationRows(
     rounds: RoundRow[],
     phases: Map<number, RoundPhase>,
@@ -212,17 +178,6 @@ export class ReportsService {
     );
   }
 
-  /**
-   * Every lecturer supervising anything this term, busiest first.
-   *
-   * Groups and students are both reported because they are different loads: two
-   * groups of one is two topics to read and two sets of meetings, where one group
-   * of four is one of each.
-   *
-   * Lecturers supervising nothing are left out. A directory of the whole faculty
-   * is a different screen, and padding this one with zeroes would bury the row
-   * somebody opened it to find.
-   */
   private async supervisionRows(
     groups: GroupRow[],
     memberships: Membership[],
@@ -252,14 +207,6 @@ export class ReportsService {
       );
   }
 
-  /**
-   * Students per major, and how many of them hold a topic this term.
-   *
-   * The totals count every active student of that major rather than only those
-   * an open round covers, because the question this answers is about the shape
-   * of the faculty — and a major that appears small only because its intake is
-   * not doing a project this term would answer it wrongly.
-   */
   private majorRows(
     majors: MajorTotal[],
     memberships: Membership[],
@@ -281,17 +228,6 @@ export class ReportsService {
       .sort((a, b) => b.students - a.students);
   }
 
-  /**
-   * What each round's groups have handed in, against what the office asked for.
-   *
-   * A count per document rather than a pair of fixed columns, because the list
-   * is now the faculty's to declare — and because "12/30 nhóm" hides which of
-   * the four documents the round is actually stuck on.
-   *
-   * Every count uses the newest version of each document only. Nothing here is
-   * ever overwritten, so counting rows would report a diligent group three times
-   * and their supervisor as three answers behind.
-   */
   private progressRows(
     rounds: RoundRow[],
     groups: GroupRow[],
@@ -340,14 +276,6 @@ export class ReportsService {
 
   // ── the reads ─────────────────────────────────────────────
 
-  /**
-   * Every live membership of the term, carrying the three facts every section
-   * counts it by: which round it sits in, whose topic, and the student's major.
-   *
-   * One query rather than three, so the same rows produce the placement split,
-   * the supervision load and the per-major totals — and no two of those can
-   * report a different number of students.
-   */
   private async memberships(semesterId: number): Promise<Membership[]> {
     const rows = await this.prisma.registrationGroupMember.findMany({
       where: { semesterId, ...LIVE_MEMBERSHIP },
@@ -384,7 +312,6 @@ export class ReportsService {
     }));
   }
 
-  /** Topics per round, and how many of them a settled round set running. */
   private async topicCounts(semesterId: number) {
     const rows = await this.prisma.topic.groupBy({
       by: ['roundId', 'status'],
@@ -408,7 +335,6 @@ export class ReportsService {
     return counts;
   }
 
-  /** Active students per major, across the whole faculty. */
   private async majorTotals(): Promise<MajorTotal[]> {
     const [majors, counts] = await Promise.all([
       this.prisma.major.findMany({
@@ -448,7 +374,6 @@ export class ReportsService {
     });
   }
 
-  /** Everything the term's rounds ask their groups to hand in. */
   private async requirements(semesterId: number): Promise<RequirementRow[]> {
     return this.prisma.submissionRequirement.findMany({
       where: { round: { semesterId } },
@@ -463,10 +388,6 @@ export class ReportsService {
     });
   }
 
-  /**
-   * The term being reported on: the one asked for, or the one the faculty
-   * currently has open.
-   */
   private async requireSemester(semesterId?: number) {
     const semester = semesterId
       ? await this.prisma.semester.findUnique({
@@ -537,7 +458,6 @@ interface RequirementRow {
   isRequired: boolean;
 }
 
-/** How many times each value appears. */
 function tally(values: number[]): Map<number, number> {
   const counts = new Map<number, number>();
 
@@ -548,13 +468,6 @@ function tally(values: number[]): Map<number, number> {
   return counts;
 }
 
-/**
- * The latest version each group handed in against each document.
- *
- * Nothing is ever overwritten here — re-submitting writes a new row one version
- * higher — so counting rows would count a diligent group three times and report
- * their supervisor as three answers behind.
- */
 function newestPerGroupAndRequirement(rows: SubmissionRow[]): SubmissionRow[] {
   const newest = new Map<string, SubmissionRow>();
 

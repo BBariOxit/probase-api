@@ -74,7 +74,6 @@ export type ImportRow = z.infer<typeof ImportRowSchema>;
 const asOptional = (value: string | undefined) =>
   value && value.length > 0 ? value : undefined;
 
-/** Maps a raw {lowercased header -> text} row into the shape ImportRowSchema expects. */
 export function toImportRowInput(raw: Record<string, string>): unknown {
   return {
     role: asOptional(raw.role)?.toUpperCase(),

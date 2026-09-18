@@ -25,16 +25,6 @@ import {
 import { QueryProposalsDto } from './dto/query-proposals.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
 
-/**
- * Everything either side needs to read a proposal, and nothing either side does
- * not.
- *
- * The student block is here because the lecturer's inbox is a queue of people as
- * much as of ideas — a name, a code and a class are what tell them whether this
- * is a final-year student they have taught. The address is not: a proposal is
- * answered in the system, and a lecturer who wants to talk has the student's own
- * profile page a click away.
- */
 const PROPOSAL_SELECT = {
   id: true,
   status: true,
@@ -82,19 +72,6 @@ export class ProposalsService {
     private readonly mentoring: MentoringLoadService,
   ) {}
 
-  /**
-   * Put an idea to a lecturer.
-   *
-   * The four refusals in here are the whole policy, in the order a person would
-   * hit them: the faculty has to have opened this kind of project to your
-   * intake, the round has to be at a stage where a proposal can still become
-   * something, you cannot ask for a topic while already holding one, and you get
-   * one open proposal at a time.
-   *
-   * That last one is not tidiness. Without it the cheapest strategy is to send
-   * the same idea to six lecturers and take whoever answers first, which costs
-   * five of them a reading and leaves five topics half-created.
-   */
   async create(dto: CreateProposalDto, userId: number) {
     const student = await this.requireStudent(userId);
     const semester = await this.requireActiveSemester();
@@ -142,13 +119,6 @@ export class ProposalsService {
     return render(proposal);
   }
 
-  /**
-   * One list, read from whichever end the caller stands at.
-   *
-   * A student sees what they sent, a lecturer sees what was sent to them, and
-   * the office sees everything. There is no parameter for whose proposals to
-   * fetch, so there is nothing to tamper with.
-   */
   async findAll(query: QueryProposalsDto, userId: number, role: Role) {
     const where: Prisma.TopicProposalWhereInput = {
       ...(query.status && { status: query.status }),
@@ -195,7 +165,6 @@ export class ProposalsService {
     return render(proposal);
   }
 
-  /** The student's own words, while nobody has answered them yet. */
   async update(id: number, dto: UpdateProposalDto, userId: number) {
     const student = await this.requireStudent(userId);
     const proposal = await this.requireProposal(id);
@@ -211,17 +180,6 @@ export class ProposalsService {
     return render(updated);
   }
 
-  /**
-   * Withdraw. Deleted rather than marked, because an unanswered proposal that
-   * the student took back is not a record of anything — nobody read it, nobody
-   * decided anything, and keeping it would only pad a lecturer's history with
-   * things that never happened to them.
-   *
-   * The notice that told the lecturer about it goes too. Otherwise their inbox
-   * keeps a line pointing at a proposal that no longer exists, and following it
-   * lands on a 404 — an inbox that sends you somewhere empty is worse than one
-   * that never mentioned it.
-   */
   async remove(id: number, userId: number) {
     const student = await this.requireStudent(userId);
     const proposal = await this.requireProposal(id);
@@ -238,18 +196,6 @@ export class ProposalsService {
     return { message: 'Đã rút lại đề xuất' };
   }
 
-  /**
-   * Yes — and the topic that comes of it.
-   *
-   * Created as PENDING, exactly like a topic the lecturer wrote themselves, so
-   * the faculty office still signs it off. Skipping that here would open a way
-   * around the office's review: a lecturer who wanted an unreviewed topic would
-   * only have to have a student propose it.
-   *
-   * The proposal and the topic are written together, because a proposal marked
-   * accepted with no topic behind it is a promise the rest of the system cannot
-   * keep.
-   */
   async accept(id: number, dto: AcceptProposalDto, userId: number) {
     const lecturer = await this.requireOwnLecturerProfile(userId);
     const proposal = await this.requireAnswerable(id, lecturer.id);
@@ -307,11 +253,6 @@ export class ProposalsService {
     return this.findOne(id, userId, Role.LECTURER);
   }
 
-  /**
-   * No, with a reason — the reason is required by the DTO and this is why: a
-   * refusal a student cannot learn from produces the same proposal again, and
-   * the lecturer reads it twice.
-   */
   async reject(id: number, dto: RejectProposalDto, userId: number) {
     const lecturer = await this.requireOwnLecturerProfile(userId);
     const proposal = await this.requireAnswerable(id, lecturer.id);
@@ -374,7 +315,6 @@ export class ProposalsService {
     return lecturer;
   }
 
-  /** The lecturer a proposal is being addressed to, by profile id. */
   private async requireLecturer(lecturerProfileId: number) {
     const lecturer = await this.prisma.lecturerProfile.findUnique({
       where: { id: lecturerProfileId },
@@ -444,7 +384,6 @@ export class ProposalsService {
     return proposal !== null;
   }
 
-  /** Still the student's to change: theirs, and nobody has answered it. */
   private async requireOwnPending(
     id: number,
     studentId: number,
@@ -464,7 +403,6 @@ export class ProposalsService {
     }
   }
 
-  /** Pending, and addressed to the lecturer trying to answer it. */
   private async requireAnswerable(id: number, lecturerProfileId: number) {
     const proposal = await this.requireProposal(id);
 
@@ -511,7 +449,6 @@ export class ProposalsService {
   }
 }
 
-/** The avatar is stored on the account; to a reader it is simply the person. */
 function render(proposal: ProposalRow) {
   const { student, ...rest } = proposal;
   const { user, ...studentRest } = student;

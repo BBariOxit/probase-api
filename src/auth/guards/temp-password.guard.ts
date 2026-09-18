@@ -7,16 +7,6 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ALLOW_TEMP_PASSWORD_KEY } from '../decorators/allow-temp-password.decorator';
 
-/**
- * A temporary password is a credential its owner never chose, delivered by
- * email — so it may have been read in transit, forwarded, or left sitting in a
- * shared departmental inbox. Until it has been replaced, the session it opens
- * is good for exactly one thing: replacing it.
- *
- * The frontend already redirects such a user to the change-password screen,
- * but a redirect is a convenience rather than a control: curl walks straight
- * past it. This guard is what actually holds the line.
- */
 @Injectable()
 export class TempPasswordGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}

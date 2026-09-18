@@ -1,13 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
-/**
- * What a lecturer may set when opening a topic.
- *
- * `lecturerId` and `status` are absent on purpose. The owner is taken from the
- * access token and the status only ever moves through the transitions in
- * TopicsService, so neither can be driven from the request body.
- */
 export const CreateTopicSchema = z.object({
   semesterId: z.coerce.number().int().positive(),
   projectTypeId: z.coerce.number().int().positive(),

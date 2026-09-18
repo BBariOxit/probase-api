@@ -19,31 +19,12 @@ import { CreateTopicDto } from './dto/create-topic.dto';
 import { QueryTopicsDto } from './dto/query-topics.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 
-/**
- * The statuses a topic reaches only after it has been published to students.
- * PENDING and APPROVED are drafts as far as a student is concerned: the first
- * is waiting on the faculty office, the second is approved but not yet opened
- * for registration by its lecturer.
- */
 const PUBLISHED_STATUSES = [
   TopicStatus.OPEN,
   TopicStatus.IN_PROGRESS,
   TopicStatus.COMPLETED,
 ] as const;
 
-/**
- * The one group that currently holds a topic, if any.
- *
- * A plain count of registration_groups is the wrong question. At most one group
- * can be live on a topic — so a count can only ever be nought or one — and
- * REJECTED rows are kept on purpose for the record, which means counting them
- * reports groups that walked away as though they were still there.
- *
- * Seats are simply the members: joining is one action now, so a row exists only
- * once somebody is actually in. `openForJoin` and `holdUntil` come along because
- * a seat being unoccupied is not the same as a seat being available to the person
- * looking at it.
- */
 const ACTIVE_GROUP_SELECT = {
   where: { status: { not: RegistrationGroupStatus.REJECTED } },
   select: {
@@ -59,15 +40,6 @@ const ACTIVE_GROUP_SELECT = {
   take: 1,
 } satisfies Prisma.Topic$registrationGroupsArgs;
 
-/**
- * The round a topic sits in, and through it the kind of project.
- *
- * The type is not on the topic any more: a topic belongs to a round, and the
- * round is a semester crossed with a kind of project. Carrying the type in both
- * places would be two sources for one fact. Clients still read `projectType` at
- * the top level — the shape is restored on the way out, because a caller has no
- * business knowing which table the answer came from.
- */
 const ROUND_SELECT = {
   select: {
     id: true,
@@ -78,7 +50,6 @@ const ROUND_SELECT = {
   },
 } satisfies Prisma.RegistrationRoundDefaultArgs;
 
-/** List rows carry no long-text bodies — those belong to the detail view. */
 const LIST_SELECT = {
   id: true,
   title: true,
@@ -117,38 +88,18 @@ type TopicWithGroups = {
   }[];
 };
 
-/**
- * Flattens the at-most-one live group into fields the client can read directly,
- * including which of the two buttons to offer.
- *
- * An array of one is an implementation detail of how the constraint is
- * expressed, not something every caller should have to unwrap. Nor should the
- * browse screen have to reimplement the seat arithmetic: getting it wrong there
- * means offering a seat that the API will then refuse.
- */
 function withActiveGroup<T extends TopicWithGroups>(
   topic: T,
-  /**
-   * The round's phase as of now, which is not always the one on the row: it
-   * advances when somebody asks, and this endpoint is the asking.
-   */
+
   phase: RoundPhase,
-  /**
-   * What this particular caller may do, when the caller is known.
-   *
-   * Both booleans mean "the API would accept this from you", not "a seat exists"
-   * — so everything the register endpoint checks has to be reflected here.
-   * Anything less puts a live button in front of a request certain to be refused,
-   * and the browse screen has no way to know better, since availability is
-   * exactly what it is asking this endpoint for.
-   */
+
   viewer?: {
     gateOpen: boolean;
     eligible: boolean;
     hasGroup: boolean;
-    /** The topic came out of somebody else's proposal, so it is not on offer. */
+
     reservedForOther: boolean;
-    /** The group already on this topic is one the reader belongs to. */
+
     inThisGroup: boolean;
   },
 ) {
@@ -161,25 +112,10 @@ function withActiveGroup<T extends TopicWithGroups>(
       !viewer.hasGroup &&
       !viewer.reservedForOther);
 
-  /**
-   * Two facts rather than one, because they are read by different sentences.
-   *
-   * `fromProposal` is about the topic and is true for everybody — it is why the
-   * topic exists. `proposedByMe` is about the reader, and it is the difference
-   * between "Đề tài bạn đề xuất" and "do sinh viên khác đề xuất": with only the
-   * first flag a screen would have to describe someone else's reservation and
-   * the reader's own entitlement in the same words.
-   */
   const fromProposal = sourceProposal !== null;
   const proposedByMe =
     viewer === undefined || !fromProposal ? null : !viewer.reservedForOther;
 
-  /**
-   * Flattened back to the shape callers already read. `round` comes along
-   * because the dates and the phase live there now, and a screen counting down
-   * to the deadline has to count down to the right one — a semester running Cơ
-   * sở and Tốt nghiệp closes them on different days.
-   */
   const placement = {
     projectTypeId: round.projectType.id,
     projectType: round.projectType,
@@ -191,37 +127,10 @@ function withActiveGroup<T extends TopicWithGroups>(
     },
   };
 
-  /**
-   * Whether this caller's intake may take this kind of project, or null when the
-   * question does not apply to them.
-   *
-   * Sent separately from the two booleans because "you cannot have this" and
-   * "somebody else has this" are different facts, and a screen with only
-   * canRegister/canJoin to go on cannot tell them apart — it would end up calling
-   * an unclaimed topic taken.
-   */
   const eligibleForMe = viewer?.eligible ?? null;
 
-  /**
-   * Whether this reader already holds a place this semester, or null when the
-   * question does not apply to them.
-   *
-   * Sent because it is the other reason `canRegister` can be false while a topic
-   * sits there plainly unclaimed. Without it a screen can only grey the button
-   * out and say nothing, and the student reads that as the system being broken
-   * rather than as them already having what the button offers.
-   */
   const alreadyInAGroup = viewer?.hasGroup ?? null;
 
-  /**
-   * Whether the group on this topic is the reader's own, or null when there is
-   * no group or no reader to ask about.
-   *
-   * Separate from `alreadyInAGroup`, which is true for every topic once a
-   * student holds a place anywhere — this one is true for exactly the topic they
-   * hold, and it is what stops their own project being labelled as somebody
-   * else's.
-   */
   const isMyGroup = viewer === undefined ? null : viewer.inThisGroup;
 
   if (!group) {
@@ -231,7 +140,7 @@ function withActiveGroup<T extends TopicWithGroups>(
       activeGroup: null,
       occupiedSeats: 0,
       isFull: false,
-      /** Nobody holds it: the first student to press register takes it. */
+
       canRegister: allowed,
       canJoin: false,
       eligibleForMe,
@@ -264,11 +173,7 @@ function withActiveGroup<T extends TopicWithGroups>(
       status: group.status,
       occupiedSeats: occupied,
       openForJoin: group.openForJoin,
-      /**
-       * True while seats are being kept for people the leader is bringing. The
-       * interface should say "taken" here rather than "one seat left", because a
-       * seat with somebody's name on it is not free.
-       */
+
       holdActive: holding,
     },
     occupiedSeats: occupied,
@@ -287,11 +192,6 @@ function withActiveGroup<T extends TopicWithGroups>(
   };
 }
 
-/**
- * The detail view deliberately exposes no contact details for the lecturer.
- * A student browsing topics needs to know who supervises it, not their email
- * or phone number, and this endpoint is readable by every signed-in student.
- */
 const DETAIL_INCLUDE = {
   semester: { select: { id: true, name: true, code: true } },
   round: ROUND_SELECT,
@@ -376,28 +276,12 @@ export class TopicsService {
     };
   }
 
-  /**
-   * Brings every round on the page up to date, once per round rather than once
-   * per topic.
-   *
-   * A page of twenty topics is usually two or three rounds, and the phase
-   * advances on being asked — so asking per row would be twenty reads and, worse,
-   * twenty chances to write the same advance.
-   */
   private resolveRoundPhases(items: { round: TopicRound }[]) {
     const unique = new Map(items.map((topic) => [topic.round.id, topic.round]));
 
     return this.phases.resolveMany([...unique.values()]);
   }
 
-  /**
-   * Builds the per-topic answer to "would the API accept a registration from
-   * this caller", in two queries rather than two per row.
-   *
-   * Staff get no answer at all — `undefined` leaves the flags describing the
-   * topic rather than a viewer, because a lecturer reading their own list is not
-   * a candidate for a seat and blanking the fields would just look broken.
-   */
   private async availabilityFor(
     items: {
       id: number;
@@ -464,15 +348,6 @@ export class TopicsService {
     };
   }
 
-  /**
-   * The places this caller already holds — by term, and by the topic itself.
-   *
-   * The term is what stops the register button being offered to somebody who
-   * already has a place. The topic is a different question with a different
-   * answer: it is how a screen can tell "somebody took this" from "you took
-   * this", which are the same fact about the topic and opposite facts about the
-   * reader.
-   */
   private async myPlaces(userId: number, semesterIds: number[]) {
     const rows = await this.prisma.registrationGroupMember.findMany({
       where: {
@@ -490,16 +365,6 @@ export class TopicsService {
     };
   }
 
-  /**
-   * The lecturers a caller could usefully filter by — those who actually have
-   * a topic this caller can see, rather than every lecturer in the faculty.
-   *
-   * It lives here rather than on /users for two reasons. Listing accounts is
-   * admin-only and should stay that way: a student has no business enumerating
-   * staff records. And a filter offering names with nothing behind them is
-   * worse than no filter, because every one of those choices leads to an empty
-   * page.
-   */
   async findLecturers(role: Role, semesterId?: number) {
     const rows = await this.prisma.topic.findMany({
       where: {
@@ -617,7 +482,6 @@ export class TopicsService {
     return { message: 'Topic deleted' };
   }
 
-  /** Faculty office sign-off: the draft becomes a real topic. */
   async approve(id: number) {
     const topic = await this.requireTopic(id);
 
@@ -628,7 +492,6 @@ export class TopicsService {
     return this.setStatus(id, TopicStatus.APPROVED);
   }
 
-  /** The lecturer decides when an approved topic starts taking registrations. */
   async open(id: number, userId: number, role: Role) {
     const topic = await this.requireOwnTopic(id, userId, role);
 
@@ -641,7 +504,6 @@ export class TopicsService {
     return this.setStatus(id, TopicStatus.OPEN);
   }
 
-  /** Stops new registrations without withdrawing the topic altogether. */
   async close(id: number, userId: number, role: Role) {
     const topic = await this.requireOwnTopic(id, userId, role);
 
@@ -662,12 +524,6 @@ export class TopicsService {
     return this.presentDetail(topic);
   }
 
-  /**
-   * A single topic, with its round's phase brought up to date rather than read
-   * off the row. Every write path returns through here, and a response that
-   * reported a gate as open a minute after it shut would be the one place a
-   * client had no reason to doubt.
-   */
   private async presentDetail<T extends TopicWithGroups>(topic: T) {
     const phases = await this.phases.resolveMany([topic.round]);
 
@@ -700,12 +556,6 @@ export class TopicsService {
     return { ...topic, activeGroupCount: topic._count.registrationGroups };
   }
 
-  /**
-   * Role alone is not authorisation. Being a LECTURER lets you edit *a* topic;
-   * owning this one is what lets you edit *this* topic. Admins are exempt
-   * because the faculty office has to be able to clean up after a lecturer who
-   * has left.
-   */
   private async requireOwnTopic(id: number, userId: number, role: Role) {
     const topic = await this.requireTopic(id);
 
@@ -720,11 +570,6 @@ export class TopicsService {
     return topic;
   }
 
-  /**
-   * Topics hang off LecturerProfile, not User, so a LECTURER account with no
-   * profile row cannot own one — an account in that state is half-created
-   * rather than authorised.
-   */
   private async requireLecturerProfileId(userId: number) {
     const profile = await this.prisma.lecturerProfile.findUnique({
       where: { userId },
@@ -750,11 +595,6 @@ export class TopicsService {
   }
 }
 
-/**
- * Staff see every status; a student sees only what has been published, and a
- * `?status=PENDING` from a student narrows within that set rather than
- * escaping it.
- */
 function visibleStatusFilter(
   role: Role,
   requested: TopicStatus | undefined,

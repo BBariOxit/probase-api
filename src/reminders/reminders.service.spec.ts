@@ -5,17 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RoundPhaseService } from '../rounds/round-phase.service';
 import { RemindersService } from './reminders.service';
 
-/**
- * What has to hold for a job nobody watches.
- *
- * Three properties, and none of them is that a reminder gets sent. The first is
- * that a pass never looks backwards — a reminder about a deadline that has gone
- * is noise addressed to somebody who can no longer act. The second is that
- * running twice sends once, which is what the dedupe key buys and the reason
- * every key carries the deadline it is about: an extension is a new deadline and
- * has to be a new notice. The third is that nobody is written to about something
- * they have already done.
- */
 describe('RemindersService', () => {
   let service: RemindersService;
   let prisma: {
@@ -29,7 +18,6 @@ describe('RemindersService', () => {
   };
   let phases: { resolveMany: jest.Mock };
 
-  /** A round whose gate closes in two days, with one intake declared. */
   const closingSoon = {
     id: 12,
     semesterId: 1,
@@ -70,7 +58,6 @@ describe('RemindersService', () => {
     service = module.get(RemindersService);
   });
 
-  /** The notices handed to `notify`, flattened across both passes. */
   function sent() {
     return notifications.notify.mock.calls.flatMap(
       (call: [{ type: NotificationType; dedupeKey?: string }[]]) => call[0],
@@ -148,11 +135,6 @@ describe('RemindersService', () => {
       );
     });
 
-    /**
-     * The office moving a deadline is a new thing to be told about, not a repeat
-     * of the notice already sent — which is why the date is in the key and not
-     * just the document.
-     */
     it('keys the notice to the deadline as well as the document', async () => {
       prisma.submissionRequirement.findMany.mockResolvedValue([
         {

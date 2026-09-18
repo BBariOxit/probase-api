@@ -16,55 +16,17 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
-/** FR_STU_01: the reset link is valid for fifteen minutes and one use. */
 const RESET_TOKEN_TTL_MINUTES = 15;
 
-/**
- * Failures that pass before any delay applies.
- *
- * Three leaves room for a mistype and a stale browser autofill without the
- * person ever meeting a delay, which is the whole point: this has to be
- * invisible to everyone it is not aimed at.
- */
 const FREE_PASSWORD_ATTEMPTS = 3;
 
-/** The first delay, doubling with every further failure. */
 const PASSWORD_BACKOFF_START_MS = 1_000;
 
-/**
- * Ceiling on the delay, and the reason a delay is used rather than a lockout.
- *
- * Thirty seconds already ends the attack — under three thousand guesses a day
- * against one account, no matter how many IP addresses are behind them — while
- * someone who genuinely forgot their password waits less time than it takes to
- * go find it written down. A hard lockout would buy nothing on top of that and
- * would hand anyone who knows an address the power to shut its owner out.
- */
 const PASSWORD_BACKOFF_MAX_MS = 30_000;
 
-/**
- * Stands in for the password of an account that cannot be signed in to.
- *
- * `login` has to take the same time whether or not the address exists, or the
- * response latency answers the question the error message deliberately refuses
- * to. A `findUnique` miss returns in about a millisecond; bcrypt at cost 10
- * takes tens of them. That gap is enough to sort a list of guessed addresses
- * into real accounts and junk — and here the guesses are cheap to make, because
- * a student's address is their student code at the university domain.
- *
- * Comparing against a throwaway hash of the same cost makes both paths do the
- * same work. The plaintext behind it is not a secret and does not need to be:
- * matching it unlocks nothing, because that path ends in the same rejection.
- */
 const ABSENT_ACCOUNT_PASSWORD_HASH =
   '$2b$10$Lh36v./BP/ZgRspszc4NE.SipqI9aACi2TdYJTxd11Xri.fQc/4h2';
 
-/**
- * How long this account still has to wait, or 0 if it may try now.
- *
- * A missing user is never waiting: there is no row to hold a delay, and
- * inventing one would leak which addresses exist.
- */
 function passwordRetryAfterMs(
   user: { passwordRetryAfter: Date | null } | null,
 ) {
@@ -72,18 +34,10 @@ function passwordRetryAfterMs(
   return Math.max(0, user.passwordRetryAfter.getTime() - Date.now());
 }
 
-/** Seconds, rounded up, for a message someone has to read and act on. */
 function retryAfterSeconds(ms: number) {
   return Math.ceil(ms / 1000);
 }
 
-/**
- * The delay owed after `failures` consecutive wrong passwords, or 0.
- *
- * 2 ** overrun reaches Infinity long before it overflows anything that matters,
- * and Math.min takes Infinity to the cap, so a very long attack needs no
- * special case.
- */
 function passwordBackoffMs(failures: number) {
   const overrun = failures - FREE_PASSWORD_ATTEMPTS;
   if (overrun <= 0) return 0;
@@ -94,11 +48,6 @@ function passwordBackoffMs(failures: number) {
   );
 }
 
-/**
- * Returned to every caller of forgotPassword, whether or not the address
- * exists. Telling an unknown address apart from a known one would turn the
- * endpoint into a list of who holds an account here.
- */
 const FORGOT_PASSWORD_REPLY = {
   message:
     'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi.',
@@ -246,19 +195,6 @@ export class AuthService {
     return { message: 'Đã đăng xuất' };
   }
 
-  /**
-   * The session, and only the session.
-   *
-   * Every field here is named, and the two profiles are narrowed to the name and
-   * the code. Selecting the profile rows whole used to send `StudentProfile.note`
-   * — the faculty office's private remarks about that student, "bảo lưu HK1",
-   * "gọi không nghe máy" — back to the student it is written about, on an
-   * endpoint the app calls on every page load. Nothing on screen rendered it,
-   * which is exactly why it went unnoticed for so long.
-   *
-   * Anything richer belongs to `GET /me/profile`, which is asked for once by the
-   * one screen that shows it, rather than fetched on every navigation.
-   */
   async getMe(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -287,21 +223,6 @@ export class AuthService {
     return user;
   }
 
-  /**
-   * Shares the account's backoff with sign-in, because it is the same secret
-   * being guessed.
-   *
-   * The caller already holds a valid access token, so this is the endpoint
-   * someone reaches for after stealing a session: guess the current password and
-   * the account is theirs for good. Holding a token is not a reason to hand over
-   * unlimited guesses. There is no enumeration to worry about here — the token
-   * already names the account — so the reply can say exactly what is wrong.
-   *
-   * One consequence worth knowing: failures here also delay signing in, since
-   * both count against the same password. That is the intended reading rather
-   * than a side effect, and it costs the honest user nothing, because someone
-   * fumbling their current password is already signed in.
-   */
   async changePassword(userId: number, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -350,14 +271,6 @@ export class AuthService {
 
   // ── Self-service password reset (FR_STU_01) ──────────────
 
-  /**
-   * Always resolves the same reply, and does so before any email is sent.
-   *
-   * Returning early matters as much as the wording: doing the database write
-   * and the Brevo call inline would make a known address measurably slower to
-   * answer than an unknown one, and that timing difference is the answer the
-   * uniform message is there to withhold.
-   */
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -402,10 +315,6 @@ export class AuthService {
     return FORGOT_PASSWORD_REPLY;
   }
 
-  /**
-   * Lets the client find out a link is dead before asking for a new password,
-   * rather than after the user has typed one twice.
-   */
   async checkResetToken(token: string) {
     const record = await this.findLiveResetToken(token);
     return { valid: record !== null };
@@ -454,21 +363,6 @@ export class AuthService {
 
   // ── Private helpers ──────────────────────────────────────
 
-  /**
-   * Extends this account's backoff after a wrong password.
-   *
-   * The count is incremented by the database rather than computed here from the
-   * row we happen to have read. Reading 3 and writing 4 looks equivalent until
-   * guesses arrive in parallel: fifty concurrent attempts would all read the
-   * same 3, all write 4, and the delay would never reflect more than one of
-   * them. Letting Postgres do the arithmetic means every attempt advances the
-   * count exactly once, whatever order they land in.
-   *
-   * The count keeps rising past the point where the delay stops growing. That is
-   * deliberate: it is the only record that the account is under attack, and an
-   * admin reading `failedPasswordCount = 4000` learns something that a count
-   * pinned at the cap would hide.
-   */
   private async recordFailedPassword(user: { id: number }) {
     const { failedPasswordCount } = await this.prisma.user.update({
       where: { id: user.id },
@@ -489,13 +383,6 @@ export class AuthService {
     });
   }
 
-  /**
-   * Clears the backoff once the password is entered correctly.
-   *
-   * Skipped when there is nothing to clear, so the overwhelmingly common case —
-   * someone typing their password correctly — stays a read and does not turn
-   * every sign-in into a write.
-   */
   private async clearFailedPasswords(user: {
     id: number;
     failedPasswordCount: number;
@@ -510,7 +397,6 @@ export class AuthService {
     });
   }
 
-  /** Resolves a raw token to its unexpired row, or null. */
   private async findLiveResetToken(token: string) {
     if (!token) return null;
 
@@ -534,12 +420,6 @@ export class AuthService {
     return record;
   }
 
-  /**
-   * Password resets are exactly the sensitive action FR_SYS_03 wants recorded:
-   * when someone reports a hijacked account, the question is whether a reset
-   * happened and when. Logging must never be the reason an auth flow fails,
-   * so a write that goes wrong is swallowed.
-   */
   private async recordAudit(userId: number, action: string, targetId: number) {
     await this.prisma.auditLog
       .create({

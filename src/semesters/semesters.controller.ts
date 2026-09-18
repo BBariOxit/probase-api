@@ -76,14 +76,6 @@ export class SemestersController {
     return this.roundsService.findForSemester(id);
   }
 
-  /**
-   * The whole registration plan for a term, in one call: which kind of project
-   * is open, to which intakes, and between which dates.
-   *
-   * Declaring an intake is what creates a round, so there is no separate step
-   * that makes one — the same reason registering for a topic is what makes a
-   * group.
-   */
   @Roles('ADMIN')
   @Put(':id/rounds')
   setRounds(
@@ -94,10 +86,6 @@ export class SemestersController {
     return this.roundsService.setSemesterRounds(id, dto, actorId);
   }
 
-  /**
-   * Open to every signed-in role, because each answers for itself: a student
-   * gets the kinds of project their cohort may take, staff get the catalogue.
-   */
   @Get(':id/eligibility/mine')
   findMyEligibleProjectTypes(
     @Param('id', ParseIntPipe) id: number,

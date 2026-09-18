@@ -5,19 +5,6 @@ import { RoundPhaseService } from '../rounds/round-phase.service';
 import { StudentRosterService } from '../students/student-roster.service';
 import { ReportsService } from './reports.service';
 
-/**
- * Two counts here are easy to get wrong in a way nobody notices, because both
- * produce a plausible number.
- *
- * The first is what counts as choosing your own topic. Joining through a
- * friend's link is still the student choosing, and lumping it in with the
- * office's placements would make free registration look half as effective as it
- * is — which is the exact figure the faculty uses to decide whether to keep it.
- *
- * The second is what counts as waiting for feedback. Nothing here is ever
- * overwritten, so a group that revised its report twice has three rows; counting
- * rows would report their supervisor as three answers behind when they are none.
- */
 describe('ReportsService', () => {
   let service: ReportsService;
   let prisma: Record<string, Record<string, jest.Mock>>;
@@ -32,7 +19,6 @@ describe('ReportsService', () => {
     eligibilities: [{ cohort: '2022' }],
   };
 
-  /** One live membership on this round's topic, however the student got there. */
   const member = (joinSource: GroupJoinSource) => ({
     joinSource,
     student: { majorId: 1 },
@@ -120,7 +106,6 @@ describe('ReportsService', () => {
   });
 
   describe('groups waiting on their supervisor', () => {
-    /** Three versions of one document; only the last is still unanswered. */
     const revised = [
       {
         groupId: 70,
@@ -168,11 +153,6 @@ describe('ReportsService', () => {
       expect(report.progress[0].awaitingFeedback).toBe(0);
     });
 
-    /**
-     * "Đủ" is measured against the required documents only. An optional one
-     * left undone must not hold a group out of the finished column, or the
-     * office chases work the faculty never insisted on.
-     */
     it('does not let an optional document hold a group back', async () => {
       prisma.submissionRequirement.findMany.mockResolvedValue([
         {

@@ -2,9 +2,8 @@ import { Readable } from 'stream';
 import ExcelJS, { type CellValue } from 'exceljs';
 
 export interface ParsedImportRow {
-  /** 1-based spreadsheet row number, for error reporting back to the admin */
   rowNumber: number;
-  /** header (lowercased, trimmed) -> trimmed cell text */
+
   values: Record<string, string>;
 }
 
