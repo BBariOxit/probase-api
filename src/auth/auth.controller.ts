@@ -7,7 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Req,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AllowTempPassword } from './decorators/allow-temp-password.decorator';
@@ -58,8 +62,13 @@ export class AuthController {
   @Throttle(CREDENTIAL_IP_CEILING)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { refreshToken, ...result } = await this.authService.login(dto);
+    this.setRefreshTokenCookie(res, refreshToken);
+    return result;
   }
 
   // A refresh token is a signed 256-bit value that rotates on every use, so it
@@ -68,8 +77,19 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Body() dto: RefreshTokenDto) {
-    return this.authService.refreshTokens(dto.refreshToken);
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException(
+        'Không tìm thấy phiên đăng nhập',
+      );
+    }
+    const { refreshToken, ...result } = await this.authService.refreshTokens(token);
+    this.setRefreshTokenCookie(res, refreshToken);
+    return result;
   }
 
   // ── Self-service password reset (FR_STU_01) ──────────────
@@ -106,7 +126,11 @@ export class AuthController {
   @AllowTempPassword()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout(@GetUser('id') userId: number) {
+  logout(
+    @GetUser('id') userId: number,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.clearCookie('refreshToken', { path: '/auth' });
     return this.authService.logout(userId);
   }
 
@@ -127,10 +151,27 @@ export class AuthController {
   @AllowTempPassword()
   @Throttle(CREDENTIAL_IP_CEILING)
   @Patch('change-password')
-  changePassword(
+  async changePassword(
     @GetUser('id') userId: number,
     @Body() dto: ChangePasswordDto,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.changePassword(userId, dto);
+    const { refreshToken, ...result } = await this.authService.changePassword(
+      userId,
+      dto,
+    );
+    this.setRefreshTokenCookie(res, refreshToken);
+    return result;
+  }
+
+  private setRefreshTokenCookie(res: Response, token: string) {
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('refreshToken', token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days matches JWT_REFRESH_EXPIRES_IN default
+    });
   }
 }
