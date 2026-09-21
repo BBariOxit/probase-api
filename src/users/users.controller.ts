@@ -99,6 +99,15 @@ export class UsersController {
     return this.usersService.remove(id, actorId);
   }
 
+  @Delete(':id/hard')
+  @HttpCode(HttpStatus.OK)
+  hardDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser('id') actorId: number,
+  ) {
+    return this.usersService.hardDelete(id, actorId);
+  }
+
   // ── Admin reset password ──────────────────────────────────
 
   @Post(':id/reset-password')

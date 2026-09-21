@@ -467,6 +467,32 @@ export class UsersService {
     return { message: `User #${id} deactivated successfully` };
   }
 
+  // ── hardDelete ────────────────────────────────────────────
+
+  async hardDelete(id: number, actorId: number) {
+    if (id === actorId) {
+      throw new ConflictException('Bạn không thể tự xóa tài khoản của mình');
+    }
+
+    const user = await this.findOne(id);
+
+    // Audit the deletion before deleting, so we have a record of who was
+    // deleted and by whom. The cascade will wipe refresh tokens and profiles.
+    await this.prisma.$transaction(async (tx) => {
+      await recordAudit(tx, {
+        userId: actorId,
+        action: 'DELETE_USER',
+        targetTable: 'users',
+        targetId: id,
+        oldValue: { email: user.email, role: user.role },
+      });
+
+      await tx.user.delete({ where: { id } });
+    });
+
+    return { message: `Đã xóa tài khoản ${user.email}` };
+  }
+
   // ── resetPassword ─────────────────────────────────────────
 
   async resetPassword(id: number, actorId: number) {
