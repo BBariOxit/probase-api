@@ -51,16 +51,26 @@ const StudentImportRowSchema = z
     cohort: cohortFromStudentCode(row.code)!,
   }));
 
-const LecturerImportRowSchema = z.object({
-  role: z.literal('LECTURER'),
-  email: emailSchema,
-  fullName: z.string().min(1, 'fullName is required').max(255),
-  code: z.string().min(1, 'code is required').max(50),
-  academicTitle: z.string().max(100).optional(),
-  researchInterests: z.string().max(1000).optional(),
-  phone: z.string().max(20).optional(),
-  bio: z.string().max(2000).optional(),
-});
+const LecturerImportRowSchema = z
+  .object({
+    role: z.literal('LECTURER'),
+    email: emailSchema,
+    fullName: z.string().min(1, 'fullName is required').max(255),
+    code: z.string().max(50).optional(),
+    academicTitle: z.string().max(100).optional(),
+    researchInterests: z.string().max(1000).optional(),
+    phone: z.string().max(20).optional(),
+    bio: z.string().max(2000).optional(),
+  })
+  .transform((row) => ({
+    ...row,
+    // Auto-generate code if not provided
+    code:
+      row.code ||
+      `GV${Math.floor(Math.random() * 1000000)
+        .toString()
+        .padStart(6, '0')}`,
+  }));
 
 export const ImportRowSchema = z.discriminatedUnion('role', [
   StudentImportRowSchema,
@@ -74,9 +84,39 @@ export type ImportRow = z.infer<typeof ImportRowSchema>;
 const asOptional = (value: string | undefined) =>
   value && value.length > 0 ? value : undefined;
 
+function normalizeRole(role: string | undefined): string | undefined {
+  if (!role) return undefined;
+  const normalized = role.trim().toUpperCase();
+  if (
+    ['SV', 'SINH VIEN', 'SINH VIÊN', 'SINHVIEN', 'STUDENT'].includes(normalized)
+  )
+    return 'STUDENT';
+  if (
+    [
+      'GV',
+      'GIANG VIEN',
+      'GIẢNG VIÊN',
+      'GIANGVIEN',
+      'GIAO VIEN',
+      'GIÁO VIÊN',
+      'GIAOVIEN',
+      'LECTURER',
+    ].includes(normalized)
+  )
+    return 'LECTURER';
+  return normalized;
+}
+
+/**
+ * Convert a raw row (header-keyed by the file's original column names,
+ * lowercased) to the canonical input shape for ImportRowSchema.
+ *
+ * Used by the legacy single-step bulk-import path where the file must already
+ * use the standard English column names.
+ */
 export function toImportRowInput(raw: Record<string, string>): unknown {
   return {
-    role: asOptional(raw.role)?.toUpperCase(),
+    role: normalizeRole(asOptional(raw.role)),
     email: asOptional(raw.email),
     fullName: asOptional(raw.fullname),
     code: asOptional(raw.code),
@@ -86,6 +126,29 @@ export function toImportRowInput(raw: Record<string, string>): unknown {
     researchInterests: asOptional(raw.researchinterests),
     phone: asOptional(raw.phone),
     bio: asOptional(raw.bio),
+  };
+}
+
+/**
+ * Convert a pre-mapped field object (already keyed by SystemField names) to
+ * the canonical input shape for ImportRowSchema.
+ *
+ * Used by the wizard import path after `applyMapping()` has been called.
+ */
+export function toImportRowInputFromMapped(
+  mapped: Record<string, string | undefined>,
+): unknown {
+  return {
+    role: normalizeRole(mapped.role),
+    email: mapped.email || undefined,
+    fullName: mapped.fullName || undefined,
+    code: mapped.code || undefined,
+    majorCode: mapped.majorCode || undefined,
+    class: mapped.class || undefined,
+    academicTitle: mapped.academicTitle || undefined,
+    researchInterests: mapped.researchInterests || undefined,
+    phone: mapped.phone || undefined,
+    bio: mapped.bio || undefined,
   };
 }
 

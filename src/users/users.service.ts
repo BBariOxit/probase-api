@@ -25,10 +25,17 @@ import {
   formatImportRowError,
   ImportRowSchema,
   toImportRowInput,
+  toImportRowInputFromMapped,
 } from './import/import-row.schema';
 import type { ImportRow } from './import/import-row.schema';
-import { parseImportFile } from './import/parse-import-file.util';
+import {
+  extractHeaders,
+  parseImportFile,
+} from './import/parse-import-file.util';
 import type { ParsedImportRow } from './import/parse-import-file.util';
+import { suggestMapping, applyMapping } from './import/fuzzy-match.util';
+import type { SystemField, FieldSuggestion } from './import/fuzzy-match.util';
+import { ImportSessionService } from './import/import-session.service';
 
 interface ValidatedImportRow {
   rowNumber: number;
@@ -62,6 +69,48 @@ export interface BulkImportResult {
 
   emailsFailedCount: number;
 
+  warnedCount: number;
+  created: BulkImportRowResult[];
+  failed: BulkImportRowResult[];
+}
+
+// Wizard import types
+export interface ParseImportResult {
+  sessionId: string;
+  /** Original column headers from the file (for the mapping UI). */
+  headers: string[];
+  /** Fuzzy-matched suggestions, keyed by system field. */
+  suggestions: Record<SystemField, FieldSuggestion>;
+  rowCount: number;
+  expiresAt: Date;
+}
+
+export interface PreviewImportRow {
+  row: number;
+  valid: boolean;
+  /** Present when valid = true. */
+  email?: string;
+  role?: string;
+  fullName?: string;
+  warnings?: string[];
+  /** Present when valid = false. */
+  reason?: string;
+  /** Raw mapped values (for display in preview table). */
+  values?: Record<string, string>;
+}
+
+export interface PreviewImportResult {
+  sessionId: string;
+  total: number;
+  validCount: number;
+  invalidCount: number;
+  rows: PreviewImportRow[];
+}
+
+export interface CommitImportResult {
+  sessionId: string;
+  createdCount: number;
+  failedCount: number;
   warnedCount: number;
   created: BulkImportRowResult[];
   failed: BulkImportRowResult[];
@@ -117,6 +166,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly importSession: ImportSessionService,
   ) {}
 
   // ── findAll ──────────────────────────────────────────────
@@ -125,7 +175,7 @@ export class UsersService {
     const { role, isActive, search, page, limit } = query;
 
     const where = {
-      ...(role !== undefined && { role }),
+      ...(role !== undefined ? { role } : { role: { not: Role.ADMIN } }),
       ...(isActive !== undefined && { isActive }),
       ...(search && {
         OR: [
@@ -254,7 +304,309 @@ export class UsersService {
     return user;
   }
 
-  // ── bulkImport ───────────────────────────────────────────
+  // ── Import Wizard ─────────────────────────────────────────
+
+  /**
+   * Step 1 — Parse the uploaded file, extract headers and run fuzzy matching.
+   * The parsed rows are stored in an import session (in-memory, TTL 30 min).
+   * No validation or DB writes happen here.
+   */
+  async parseImport(
+    file: Express.Multer.File,
+    adminId: number,
+  ): Promise<ParseImportResult> {
+    const headers = await extractHeaders(file.buffer, file.originalname).catch(
+      (err: unknown) => {
+        throw new BadRequestException(
+          `Could not read import file: ${
+            err instanceof Error ? err.message : 'unknown error'
+          }`,
+        );
+      },
+    );
+
+    let rows: ParsedImportRow[];
+    try {
+      rows = await parseImportFile(file.buffer, file.originalname);
+    } catch (err) {
+      throw new BadRequestException(
+        `Could not read import file: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+    }
+
+    if (rows.length === 0) {
+      throw new BadRequestException('Import file has no data rows');
+    }
+
+    const suggestions = suggestMapping(headers);
+    const session = this.importSession.create(adminId, headers, rows);
+
+    return {
+      sessionId: session.id,
+      headers,
+      suggestions,
+      rowCount: rows.length,
+      expiresAt: session.expiresAt,
+    };
+  }
+
+  /**
+   * Step 2 — Dry-run validation with the admin-confirmed column mapping.
+   * Validates all rows in-memory (and checks existing emails in DB).
+   * Nothing is written to DB.
+   */
+  async previewImport(
+    sessionId: string,
+    mapping: Record<SystemField, string | null>,
+    adminId: number,
+  ): Promise<PreviewImportResult> {
+    const session = this.importSession.get(sessionId, adminId);
+
+    if (session.committed) {
+      throw new ConflictException(
+        'Session đã được import. Không thể preview lại.',
+      );
+    }
+
+    // Apply mapping to each row to get field-keyed values, then validate.
+    const mappedRows = session.rows.map((row) => ({
+      rowNumber: row.rowNumber,
+      values: applyMapping(row.values, mapping),
+    }));
+
+    // Convert to the raw-row format validateImportRows expects.
+    const pseudoRows: ParsedImportRow[] = mappedRows.map((r) => ({
+      rowNumber: r.rowNumber,
+      // Cast: applyMapping returns Record<string, string | undefined>;
+      // validateImportRows handles undefined gracefully via toImportRowInput.
+      values: r.values as Record<string, string>,
+    }));
+
+    const validated = await this.validateImportRowsMapped(pseudoRows);
+    const emailCheck = await this.rejectTakenEmails(validated.valid);
+
+    const previewRows: PreviewImportRow[] = [
+      ...emailCheck.valid.map((v) => ({
+        row: v.rowNumber,
+        valid: true,
+        email: v.data.email,
+        role: v.data.role,
+        fullName: v.data.fullName,
+        ...(v.warnings?.length && { warnings: v.warnings }),
+        values: this.buildDisplayValues(v.data),
+      })),
+      ...validated.failed.map((f) => ({
+        row: f.row,
+        valid: false,
+        email: f.email,
+        reason: f.reason,
+      })),
+      ...emailCheck.failed.map((f) => ({
+        row: f.row,
+        valid: false,
+        email: f.email,
+        reason: f.reason,
+      })),
+    ].sort((a, b) => a.row - b.row);
+
+    return {
+      sessionId,
+      total: session.rows.length,
+      validCount: emailCheck.valid.length,
+      invalidCount: validated.failed.length + emailCheck.failed.length,
+      rows: previewRows,
+    };
+  }
+
+  /**
+   * Step 3 — Actually create accounts in DB. No emails are sent here.
+   * Returns the session ID for the send-emails step.
+   * Idempotency: a session can only be committed once.
+   */
+  async commitImport(
+    sessionId: string,
+    mapping: Record<SystemField, string | null>,
+    adminId: number,
+  ): Promise<CommitImportResult> {
+    const session = this.importSession.get(sessionId, adminId);
+
+    if (session.committed) {
+      throw new ConflictException(
+        'Session đã được import rồi. Không thể import lại.',
+      );
+    }
+
+    const pseudoRows: ParsedImportRow[] = session.rows.map((row) => ({
+      rowNumber: row.rowNumber,
+      values: applyMapping(row.values, mapping) as Record<string, string>,
+    }));
+
+    const failed: BulkImportRowResult[] = [];
+
+    const validated = await this.validateImportRowsMapped(pseudoRows);
+    failed.push(...validated.failed);
+
+    const usable = await this.rejectTakenEmails(validated.valid);
+    failed.push(...usable.failed);
+
+    const prepared = await mapWithConcurrency(
+      usable.valid,
+      PASSWORD_HASH_CONCURRENCY,
+      async (row): Promise<PreparedImportRow> => {
+        const tempPassword = this.generateTempPassword();
+        return {
+          ...row,
+          tempPassword,
+          passwordHash: await bcrypt.hash(tempPassword, 10),
+        };
+      },
+    );
+
+    const created: BulkImportRowResult[] = [];
+    const createdUserIds: number[] = [];
+
+    await mapWithConcurrency(
+      prepared,
+      ACCOUNT_INSERT_CONCURRENCY,
+      async (row) => {
+        let userId: number | undefined;
+        try {
+          const user = await this.insertAccountReturningId(row);
+          userId = user.id;
+        } catch (err) {
+          failed.push({
+            row: row.rowNumber,
+            email: row.data.email,
+            reason: this.describeCreateFailure(
+              err,
+              row.data.role,
+              row.data.code,
+            ),
+          });
+          return;
+        }
+
+        if (userId) createdUserIds.push(userId);
+        created.push({
+          row: row.rowNumber,
+          email: row.data.email,
+          role: row.data.role,
+          ...(row.warnings?.length && { warnings: row.warnings }),
+        });
+      },
+    );
+
+    // Audit
+    await this.prisma.$transaction((tx) =>
+      recordAudit(tx, {
+        userId: adminId,
+        action: 'BULK_IMPORT_COMMIT',
+        targetTable: 'users',
+        targetId: adminId,
+        newValue: { createdCount: created.length, failedCount: failed.length },
+      }),
+    );
+
+    this.importSession.markCommitted(sessionId, createdUserIds);
+
+    created.sort(byRowNumber);
+    failed.sort(byRowNumber);
+
+    return {
+      sessionId,
+      createdCount: created.length,
+      failedCount: failed.length,
+      warnedCount: created.filter((r) => r.warnings?.length).length,
+      created,
+      failed,
+    };
+  }
+
+  /**
+   * Step 4 — Send welcome emails to all accounts created in the commit step.
+   * Idempotency: emails can only be sent once per session.
+   */
+  async sendImportEmails(
+    sessionId: string,
+    adminId: number,
+  ): Promise<{ sent: number; failed: number }> {
+    const session = this.importSession.get(sessionId, adminId);
+
+    if (!session.committed) {
+      throw new ConflictException(
+        'Session chưa được commit. Vui lòng xác nhận import trước khi gửi mail.',
+      );
+    }
+
+    if (session.emailsSent) {
+      throw new ConflictException(
+        'Email đã được gửi cho phiên import này rồi.',
+      );
+    }
+
+    // Fetch user info for every created account.
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: session.committedUserIds } },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        studentProfile: { select: { fullName: true } },
+        lecturerProfile: { select: { fullName: true } },
+      },
+    });
+
+    // Re-generate temp passwords? No — we can't recover them. Instead, we use
+    // resetPassword flow: generate a fresh temp, update hash, then email it.
+    // This is safe: the accounts are brand new (never logged in).
+    const results = await mapWithConcurrency(
+      users,
+      MAIL_SEND_CONCURRENCY,
+      async (user) => {
+        const tempPassword = this.generateTempPassword();
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { password: passwordHash, mustChangePassword: true },
+        });
+
+        const fullName =
+          user.studentProfile?.fullName ?? user.lecturerProfile?.fullName;
+
+        const sent = await this.mailService.sendAccountCreated({
+          to: user.email,
+          fullName,
+          tempPassword,
+          role: user.role,
+        });
+
+        return sent;
+      },
+    );
+
+    const sentCount = results.filter(Boolean).length;
+    const failedCount = results.length - sentCount;
+
+    // Audit
+    await this.prisma.$transaction((tx) =>
+      recordAudit(tx, {
+        userId: adminId,
+        action: 'BULK_IMPORT_SEND_EMAILS',
+        targetTable: 'users',
+        targetId: adminId,
+        newValue: { sent: sentCount, failed: failedCount },
+      }),
+    );
+
+    this.importSession.markEmailsSent(sessionId);
+
+    return { sent: sentCount, failed: failedCount };
+  }
+
+  // ── bulkImport (legacy single-step) ──────────────────────
 
   async bulkImport(file?: Express.Multer.File): Promise<BulkImportResult> {
     if (!file) throw new BadRequestException('No file uploaded');
@@ -465,6 +817,32 @@ export class UsersService {
     });
 
     return { message: `User #${id} deactivated successfully` };
+  }
+
+  // ── hardDelete ────────────────────────────────────────────
+
+  async hardDelete(id: number, actorId: number) {
+    if (id === actorId) {
+      throw new ConflictException('Bạn không thể tự xóa tài khoản của mình');
+    }
+
+    const user = await this.findOne(id);
+
+    // Audit the deletion before deleting, so we have a record of who was
+    // deleted and by whom. The cascade will wipe refresh tokens and profiles.
+    await this.prisma.$transaction(async (tx) => {
+      await recordAudit(tx, {
+        userId: actorId,
+        action: 'DELETE_USER',
+        targetTable: 'users',
+        targetId: id,
+        oldValue: { email: user.email, role: user.role },
+      });
+
+      await tx.user.delete({ where: { id } });
+    });
+
+    return { message: `Đã xóa tài khoản ${user.email}` };
   }
 
   // ── resetPassword ─────────────────────────────────────────
@@ -870,6 +1248,201 @@ export class UsersService {
         });
       }
     });
+  }
+
+  /**
+   * Like insertAccount but also returns the created user's ID, so the wizard
+   * commit step can track which accounts need emails later.
+   */
+  private async insertAccountReturningId(
+    row: PreparedImportRow,
+  ): Promise<{ id: number }> {
+    const { data, majorId, passwordHash } = row;
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: data.email,
+          password: passwordHash,
+          role: data.role,
+          mustChangePassword: true,
+        },
+        select: { id: true },
+      });
+
+      if (data.role === 'STUDENT') {
+        await tx.studentProfile.create({
+          data: {
+            userId: user.id,
+            studentCode: data.code,
+            fullName: data.fullName,
+            majorId,
+            class: data.class,
+            cohort: data.cohort,
+            phone: data.phone,
+            bio: data.bio,
+          },
+        });
+      } else {
+        await tx.lecturerProfile.create({
+          data: {
+            userId: user.id,
+            lecturerCode: data.code,
+            fullName: data.fullName,
+            academicTitle: data.academicTitle,
+            phone: data.phone,
+            bio: data.bio,
+            researchInterests: data.researchInterests,
+          },
+        });
+      }
+
+      return user;
+    });
+  }
+
+  /**
+   * Validate import rows that have already been field-mapped (wizard path).
+   * Delegates to the same validation logic as validateImportRows but uses
+   * toImportRowInputFromMapped instead of toImportRowInput.
+   */
+  private async validateImportRowsMapped(rows: ParsedImportRow[]): Promise<{
+    valid: ValidatedImportRow[];
+    failed: BulkImportRowResult[];
+  }> {
+    const majors = await this.prisma.major.findMany({
+      select: { id: true, code: true },
+    });
+    const majorIdByCode = new Map(majors.map((m) => [m.code, m.id]));
+
+    const valid: ValidatedImportRow[] = [];
+    const failed: BulkImportRowResult[] = [];
+    const emailsSeenInFile = new Set<string>();
+    const codesSeenInFile = new Set<string>();
+    const majorByClassCode = new Map<string, { code: string; row: number }>();
+
+    for (const raw of rows) {
+      // rows here already have values keyed by SystemField name (from applyMapping).
+      const parsed = ImportRowSchema.safeParse(
+        toImportRowInputFromMapped(raw.values),
+      );
+
+      if (!parsed.success) {
+        failed.push({
+          row: raw.rowNumber,
+          email: raw.values.email,
+          reason: formatImportRowError(parsed.error),
+        });
+        continue;
+      }
+
+      const data = parsed.data;
+
+      if (emailsSeenInFile.has(data.email)) {
+        failed.push({
+          row: raw.rowNumber,
+          email: data.email,
+          reason: 'Duplicate email within the file',
+        });
+        continue;
+      }
+      emailsSeenInFile.add(data.email);
+
+      const codeKey = `${data.role}:${data.code}`;
+      if (codesSeenInFile.has(codeKey)) {
+        failed.push({
+          row: raw.rowNumber,
+          email: data.email,
+          reason: `Duplicate code "${data.code}" within the file`,
+        });
+        continue;
+      }
+      codesSeenInFile.add(codeKey);
+
+      let majorId: number | undefined;
+      const warnings: string[] = [];
+
+      if (data.role === 'STUDENT') {
+        majorId = majorIdByCode.get(data.majorCode);
+        if (majorId === undefined) {
+          failed.push({
+            row: raw.rowNumber,
+            email: data.email,
+            reason: `majorCode "${data.majorCode}" not found`,
+          });
+          continue;
+        }
+
+        const classCheck = checkClassCode(data.class, data.code);
+
+        if (classCheck.status === 'contradiction') {
+          failed.push({
+            row: raw.rowNumber,
+            email: data.email,
+            reason: classCheck.error,
+          });
+          continue;
+        }
+
+        if (classCheck.status === 'unrecognised') {
+          warnings.push(classCheck.warning);
+        }
+
+        if (classCheck.status === 'ok') {
+          const { normalised } = classCheck.parsed;
+          const claimed = majorByClassCode.get(normalised);
+
+          if (claimed && claimed.code !== data.majorCode) {
+            failed.push({
+              row: raw.rowNumber,
+              email: data.email,
+              reason: `class "${data.class}" was majorCode "${claimed.code}" on row ${claimed.row} but "${data.majorCode}" here — one class cannot be two majors`,
+            });
+            continue;
+          }
+
+          if (!claimed) {
+            majorByClassCode.set(normalised, {
+              code: data.majorCode,
+              row: raw.rowNumber,
+            });
+          }
+        }
+      }
+
+      valid.push({
+        rowNumber: raw.rowNumber,
+        data,
+        majorId,
+        ...(warnings.length && { warnings }),
+      });
+    }
+
+    return { valid, failed };
+  }
+
+  /** Build a flat key-value display object from a validated ImportRow. */
+  private buildDisplayValues(data: ImportRow): Record<string, string> {
+    const result: Record<string, string> = {
+      role: data.role,
+      email: data.email,
+      fullName: data.fullName,
+      code: data.code,
+    };
+
+    if (data.role === 'STUDENT') {
+      result.majorCode = data.majorCode;
+      if (data.class) result.class = data.class;
+    } else {
+      if (data.academicTitle) result.academicTitle = data.academicTitle;
+      if (data.researchInterests)
+        result.researchInterests = data.researchInterests;
+    }
+
+    if (data.phone) result.phone = data.phone;
+    if (data.bio) result.bio = data.bio;
+
+    return result;
   }
 
   private describeCreateFailure(

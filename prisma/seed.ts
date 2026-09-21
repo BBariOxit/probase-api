@@ -26,12 +26,29 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@12345';
 // The address is the student code plus the domain, as it is at the university:
 // cohort is derived from those first two digits, so a fixture like sv001@ would
 // not survive its own validation rules.
-const DEMO_STUDENT_CODE = process.env.SEED_STUDENT_CODE ?? '2212345';
-const DEMO_STUDENT_EMAIL = (
-  process.env.SEED_STUDENT_EMAIL ?? `${DEMO_STUDENT_CODE}@dlu.edu.vn`
-).toLowerCase();
-const DEMO_STUDENT_PASSWORD =
-  process.env.SEED_STUDENT_PASSWORD ?? 'Student@123';
+const DEMO_STUDENTS = [
+  {
+    code: process.env.SEED_STUDENT_CODE ?? '2212345',
+    email: (
+      process.env.SEED_STUDENT_EMAIL ??
+      `${process.env.SEED_STUDENT_CODE ?? '2212345'}@dlu.edu.vn`
+    ).toLowerCase(),
+    password: process.env.SEED_STUDENT_PASSWORD ?? 'Student@123',
+    name: 'Nguyễn Văn A',
+  },
+  {
+    code: '2288888',
+    email: '2288888@dlu.edu.vn',
+    password: 'Student@123',
+    name: 'Phạm Thị B',
+  },
+  {
+    code: '2299999',
+    email: '2299999@dlu.edu.vn',
+    password: 'Student@123',
+    name: 'Lê Văn C',
+  },
+];
 
 // Two lecturers, not one. A single lecturer cannot exercise the rule that
 // matters most on topics — that owning a topic, rather than merely holding the
@@ -186,28 +203,30 @@ async function main() {
 
   // Created the same way UsersService does it: account and profile together,
   // never a profile-less User.
-  const demoStudent = await prisma.user.upsert({
-    where: { email: DEMO_STUDENT_EMAIL },
-    create: {
-      email: DEMO_STUDENT_EMAIL,
-      password: await bcrypt.hash(DEMO_STUDENT_PASSWORD, 10),
-      role: 'STUDENT',
-      mustChangePassword: true,
-      studentProfile: {
-        create: {
-          studentCode: DEMO_STUDENT_CODE,
-          fullName: 'Nguyễn Văn A',
-          class: 'CTK46',
-          // Derived from the code, exactly as the import and create paths do
-          // it — the seed must not be the one place that sets it by hand.
-          cohort: cohortFromStudentCode(DEMO_STUDENT_CODE)!,
-          majorId: majorIdByCode.get('KTPM'),
+  for (const student of DEMO_STUDENTS) {
+    await prisma.user.upsert({
+      where: { email: student.email },
+      create: {
+        email: student.email,
+        password: await bcrypt.hash(student.password, 10),
+        role: 'STUDENT',
+        mustChangePassword: true,
+        studentProfile: {
+          create: {
+            studentCode: student.code,
+            fullName: student.name,
+            class: 'CTK46',
+            // Derived from the code, exactly as the import and create paths do
+            // it — the seed must not be the one place that sets it by hand.
+            cohort: cohortFromStudentCode(student.code)!,
+            majorId: majorIdByCode.get('KTPM'),
+          },
         },
       },
-    },
-    update: {},
-  });
-  console.log(`  demo student: ${demoStudent.email} (mustChangePassword)`);
+      update: {},
+    });
+    console.log(`  demo student: ${student.email} (mustChangePassword)`);
+  }
 
   // Ready to use rather than mustChangePassword: these exist to drive the
   // topic screens, and a forced password change on every reseed only gets in
@@ -231,7 +250,9 @@ async function main() {
 
   console.log('\nLogin with:');
   console.log(`  ADMIN     ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
-  console.log(`  STUDENT   ${DEMO_STUDENT_EMAIL} / ${DEMO_STUDENT_PASSWORD}`);
+  for (const student of DEMO_STUDENTS) {
+    console.log(`  STUDENT   ${student.email} / ${student.password}`);
+  }
   for (const { email } of DEMO_LECTURERS) {
     console.log(`  LECTURER  ${email} / ${DEMO_LECTURER_PASSWORD}`);
   }

@@ -9,6 +9,44 @@ export interface ParsedImportRow {
 
 const SUPPORTED_EXTENSIONS = new Set(['.xlsx', '.csv']);
 
+/**
+ * Read only the first row of the file and return the header labels
+ * (trimmed, original casing). Used by the parse step of the import wizard.
+ */
+export async function extractHeaders(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string[]> {
+  const extension = originalName
+    .slice(originalName.lastIndexOf('.'))
+    .toLowerCase();
+
+  if (!SUPPORTED_EXTENSIONS.has(extension)) {
+    throw new Error(
+      `Unsupported file type "${extension}" — only .xlsx and .csv are accepted`,
+    );
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  if (extension === '.xlsx') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    await workbook.xlsx.load(buffer as any);
+  } else {
+    await workbook.csv.read(Readable.from(buffer));
+  }
+
+  const sheet = workbook.worksheets[0];
+  if (!sheet) return [];
+
+  const headers: string[] = [];
+  sheet.getRow(1).eachCell({ includeEmpty: false }, (cell) => {
+    const text = cellToString(cell.value).trim();
+    if (text) headers.push(text);
+  });
+
+  return headers;
+}
+
 export async function parseImportFile(
   buffer: Buffer,
   originalName: string,
@@ -25,11 +63,6 @@ export async function parseImportFile(
 
   const workbook = new ExcelJS.Workbook();
   if (extension === '.xlsx') {
-    // exceljs's .d.ts resolves `Buffer` through a nested, pre-generic
-    // @types/node (pulled in transitively via fast-csv), which is a
-    // structurally different type from the modern generic Buffer our own
-    // code uses — this cast is a same-value type-identity bridge, not an
-    // unsafe cast.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     await workbook.xlsx.load(buffer as any);
   } else {
