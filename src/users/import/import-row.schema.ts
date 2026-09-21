@@ -74,6 +74,13 @@ export type ImportRow = z.infer<typeof ImportRowSchema>;
 const asOptional = (value: string | undefined) =>
   value && value.length > 0 ? value : undefined;
 
+/**
+ * Convert a raw row (header-keyed by the file's original column names,
+ * lowercased) to the canonical input shape for ImportRowSchema.
+ *
+ * Used by the legacy single-step bulk-import path where the file must already
+ * use the standard English column names.
+ */
 export function toImportRowInput(raw: Record<string, string>): unknown {
   return {
     role: asOptional(raw.role)?.toUpperCase(),
@@ -86,6 +93,29 @@ export function toImportRowInput(raw: Record<string, string>): unknown {
     researchInterests: asOptional(raw.researchinterests),
     phone: asOptional(raw.phone),
     bio: asOptional(raw.bio),
+  };
+}
+
+/**
+ * Convert a pre-mapped field object (already keyed by SystemField names) to
+ * the canonical input shape for ImportRowSchema.
+ *
+ * Used by the wizard import path after `applyMapping()` has been called.
+ */
+export function toImportRowInputFromMapped(
+  mapped: Record<string, string | undefined>,
+): unknown {
+  return {
+    role: mapped.role ? mapped.role.toUpperCase() : undefined,
+    email: mapped.email || undefined,
+    fullName: mapped.fullName || undefined,
+    code: mapped.code || undefined,
+    majorCode: mapped.majorCode || undefined,
+    class: mapped.class || undefined,
+    academicTitle: mapped.academicTitle || undefined,
+    researchInterests: mapped.researchInterests || undefined,
+    phone: mapped.phone || undefined,
+    bio: mapped.bio || undefined,
   };
 }
 

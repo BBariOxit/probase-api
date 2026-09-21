@@ -12,9 +12,11 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ZodValidationPipe } from 'nestjs-zod';
@@ -27,6 +29,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpsertLecturerProfileDto } from './dto/upsert-lecturer-profile.dto';
 import { UpsertStudentProfileDto } from './dto/upsert-student-profile.dto';
 import { UsersService } from './users.service';
+import type { SystemField } from './import/fuzzy-match.util';
+import {
+  generateImportTemplate,
+  type ImportTemplateRole,
+} from './import/generate-template.util';
 
 const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -57,15 +64,95 @@ export class UsersController {
     return this.usersService.create(dto, actorId);
   }
 
-  // ── Bulk import ───────────────────────────────────────────
-  // Accepts an .xlsx or .csv roster of students/lecturers, creates one
-  // account per valid row, and emails each a temp password. Bad rows are
-  // reported back individually — one bad row never fails the whole batch.
+  // ── Import Wizard ─────────────────────────────────────────
+  //
+  // 4-step flow:
+  //   1. POST /users/import/parse          — upload file, get headers + fuzzy suggestions
+  //   2. POST /users/import/preview        — dry-run validate with confirmed mapping
+  //   3. POST /users/import/commit         — create accounts (no emails)
+  //   4. POST /users/import/:id/send-emails — send welcome emails
 
   // The size cap belongs on multer, not on a validator: multer aborts the
   // stream mid-upload, whereas a ParseFilePipe validator only inspects
   // file.size once the whole body is already buffered in memory — which is
   // exactly the memory we are trying not to spend.
+
+  /** Step 1: Upload file → get headers + fuzzy-matched column suggestions. */
+  @Post('import/parse')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_IMPORT_FILE_BYTES, files: 1 },
+    }),
+  )
+  parseImport(
+    @UploadedFile(new ParseFilePipe({ validators: [], fileIsRequired: true }))
+    file: Express.Multer.File,
+    @GetUser('id') adminId: number,
+  ) {
+    return this.usersService.parseImport(file, adminId);
+  }
+
+  /** Step 2: Dry-run validate with confirmed column mapping. */
+  @Post('import/preview')
+  @HttpCode(HttpStatus.OK)
+  previewImport(
+    @Body()
+    body: { sessionId: string; mapping: Record<SystemField, string | null> },
+    @GetUser('id') adminId: number,
+  ) {
+    return this.usersService.previewImport(
+      body.sessionId,
+      body.mapping,
+      adminId,
+    );
+  }
+
+  /** Step 3: Commit — create accounts in DB. No emails sent. */
+  @Post('import/commit')
+  @HttpCode(HttpStatus.OK)
+  commitImport(
+    @Body()
+    body: { sessionId: string; mapping: Record<SystemField, string | null> },
+    @GetUser('id') adminId: number,
+  ) {
+    return this.usersService.commitImport(
+      body.sessionId,
+      body.mapping,
+      adminId,
+    );
+  }
+
+  /** Step 4: Send welcome emails for all committed accounts. */
+  @Post('import/:sessionId/send-emails')
+  @HttpCode(HttpStatus.OK)
+  sendImportEmails(
+    @Param('sessionId') sessionId: string,
+    @GetUser('id') adminId: number,
+  ) {
+    return this.usersService.sendImportEmails(sessionId, adminId);
+  }
+
+  /** Download a pre-filled Excel template. */
+  @Get('import/template')
+  async downloadTemplate(@Query('role') role: string, @Res() res: Response) {
+    const templateRole: ImportTemplateRole =
+      role?.toUpperCase() === 'LECTURER' ? 'LECTURER' : 'STUDENT';
+
+    const buffer = await generateImportTemplate(templateRole);
+    const filename = `import-template-${templateRole.toLowerCase()}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  }
+
+  // ── Bulk import (legacy single-step) ──────────────────────
+
   @Post('bulk-import')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
