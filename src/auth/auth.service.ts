@@ -230,24 +230,30 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
 
-    const retryAfterMs = passwordRetryAfterMs(user);
-    if (retryAfterMs > 0) {
-      throw new HttpException(
-        `Sai mật khẩu nhiều lần. Thử lại sau ${retryAfterSeconds(retryAfterMs)} giây.`,
-        HttpStatus.TOO_MANY_REQUESTS,
+    if (!user.mustChangePassword) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Vui lòng nhập mật khẩu hiện tại');
+      }
+
+      const retryAfterMs = passwordRetryAfterMs(user);
+      if (retryAfterMs > 0) {
+        throw new HttpException(
+          `Sai mật khẩu nhiều lần. Thử lại sau ${retryAfterSeconds(retryAfterMs)} giây.`,
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+
+      const passwordMatch = await bcrypt.compare(
+        dto.currentPassword,
+        user.password,
       );
-    }
+      if (!passwordMatch) {
+        await this.recordFailedPassword(user);
+        throw new BadRequestException('Mật khẩu hiện tại không đúng');
+      }
 
-    const passwordMatch = await bcrypt.compare(
-      dto.currentPassword,
-      user.password,
-    );
-    if (!passwordMatch) {
-      await this.recordFailedPassword(user);
-      throw new BadRequestException('Mật khẩu hiện tại không đúng');
+      await this.clearFailedPasswords(user);
     }
-
-    await this.clearFailedPasswords(user);
 
     const hash = await bcrypt.hash(dto.newPassword, 10);
 
