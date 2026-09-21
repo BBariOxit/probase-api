@@ -10,6 +10,7 @@ interface TemplateColumn {
   width: number;
   note?: string;
   example: string | string[];
+  required?: boolean;
 }
 
 const STUDENT_COLUMNS: TemplateColumn[] = [
@@ -19,6 +20,7 @@ const STUDENT_COLUMNS: TemplateColumn[] = [
     width: 12,
     note: 'Giá trị cố định: STUDENT',
     example: 'STUDENT',
+    required: true,
   },
   {
     header: 'email',
@@ -26,6 +28,7 @@ const STUDENT_COLUMNS: TemplateColumn[] = [
     width: 28,
     note: 'Email trường (bắt buộc). Phần đầu email phải trùng với mã sinh viên (VD: 2212345@dlu.edu.vn)',
     example: '2212345@dlu.edu.vn',
+    required: true,
   },
   {
     header: 'fullName',
@@ -33,6 +36,7 @@ const STUDENT_COLUMNS: TemplateColumn[] = [
     width: 28,
     note: 'Họ và tên đầy đủ (bắt buộc)',
     example: 'Nguyễn Văn A',
+    required: true,
   },
   {
     header: 'code',
@@ -40,6 +44,7 @@ const STUDENT_COLUMNS: TemplateColumn[] = [
     width: 14,
     note: 'Mã sinh viên 7 chữ số (bắt buộc). Phải khớp với phần đầu email.',
     example: '2212345',
+    required: true,
   },
   {
     header: 'majorCode',
@@ -47,6 +52,7 @@ const STUDENT_COLUMNS: TemplateColumn[] = [
     width: 16,
     note: 'Mã chuyên ngành (bắt buộc). Phải khớp với danh mục Chuyên ngành trong hệ thống.',
     example: 'CNTT',
+    required: true,
   },
   {
     header: 'class',
@@ -78,6 +84,7 @@ const LECTURER_COLUMNS: TemplateColumn[] = [
     width: 12,
     note: 'Giá trị cố định: LECTURER',
     example: 'LECTURER',
+    required: true,
   },
   {
     header: 'email',
@@ -85,6 +92,7 @@ const LECTURER_COLUMNS: TemplateColumn[] = [
     width: 28,
     note: 'Email giảng viên (bắt buộc)',
     example: 'gv.nguyenthib@dlu.edu.vn',
+    required: true,
   },
   {
     header: 'fullName',
@@ -92,12 +100,13 @@ const LECTURER_COLUMNS: TemplateColumn[] = [
     width: 28,
     note: 'Họ và tên đầy đủ (bắt buộc)',
     example: 'Nguyễn Thị B',
+    required: true,
   },
   {
     header: 'code',
     key: 'code',
     width: 14,
-    note: 'Mã cán bộ (bắt buộc)',
+    note: 'Mã cán bộ (tùy chọn)',
     example: 'GV001',
   },
   {
@@ -151,7 +160,7 @@ export async function generateImportTemplate(
 
   // ── Header row ────────────────────────────────────────────
   sheet.columns = columns.map((col) => ({
-    header: col.header,
+    header: col.required ? `${col.header} *` : col.header,
     key: col.key,
     width: col.width,
   }));
@@ -167,11 +176,20 @@ export async function generateImportTemplate(
   headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
   headerRow.height = 20;
 
-  // Add comments to header cells.
+  // Add comments to header cells and optional styling.
   columns.forEach((col, idx) => {
-    if (!col.note) return;
     const cell = headerRow.getCell(idx + 1);
-    cell.note = col.note;
+    if (!col.required) {
+      // Lighter background for optional columns
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4B5563' }, // gray-600
+      };
+    }
+    if (col.note) {
+      cell.note = col.note;
+    }
   });
 
   // ── Example rows ─────────────────────────────────────────

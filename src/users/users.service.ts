@@ -175,7 +175,7 @@ export class UsersService {
     const { role, isActive, search, page, limit } = query;
 
     const where = {
-      ...(role !== undefined && { role }),
+      ...(role !== undefined ? { role } : { role: { not: Role.ADMIN } }),
       ...(isActive !== undefined && { isActive }),
       ...(search && {
         OR: [

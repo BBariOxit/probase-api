@@ -66,16 +66,25 @@ const StudentCreateSchema = z
     cohort: cohortFromStudentCode(input.studentCode)!,
   }));
 
-const LecturerCreateSchema = z.object({
-  role: z.literal(Role.LECTURER),
-  email: emailSchema,
-  lecturerCode: requiredTrimmed(50, 'Vui lòng nhập mã giảng viên'),
-  fullName: requiredTrimmed(255, 'Vui lòng nhập họ tên'),
-  academicTitle: trimmed(100).optional(),
-  researchInterests: trimmed(1000).optional(),
-  phone: trimmed(20).optional(),
-  bio: trimmed(2000).optional(),
-});
+const LecturerCreateSchema = z
+  .object({
+    role: z.literal(Role.LECTURER),
+    email: emailSchema,
+    lecturerCode: trimmed(50).optional(),
+    fullName: requiredTrimmed(255, 'Vui lòng nhập họ tên'),
+    academicTitle: trimmed(100).optional(),
+    researchInterests: trimmed(1000).optional(),
+    phone: trimmed(20).optional(),
+    bio: trimmed(2000).optional(),
+  })
+  .transform((input) => ({
+    ...input,
+    lecturerCode:
+      input.lecturerCode ||
+      `GV${Math.floor(Math.random() * 1000000)
+        .toString()
+        .padStart(6, '0')}`,
+  }));
 
 const AdminCreateSchema = z.object({
   role: z.literal(Role.ADMIN),

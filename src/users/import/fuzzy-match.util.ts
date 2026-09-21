@@ -44,7 +44,7 @@ export const FIELD_LABELS: Record<SystemField, string> = {
   role: 'Vai trò (role)',
   email: 'Email',
   fullName: 'Họ và tên',
-  code: 'Mã số (sinh viên / giảng viên)',
+  code: 'Mã số (SV bắt buộc, GV tùy chọn)',
   majorCode: 'Mã ngành (SV)',
   class: 'Mã lớp (SV, tùy chọn)',
   academicTitle: 'Học hàm / học vị (GV, tùy chọn)',
@@ -58,7 +58,6 @@ export const REQUIRED_FIELDS = new Set<SystemField>([
   'role',
   'email',
   'fullName',
-  'code',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -221,7 +220,7 @@ function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFC')
-    .replace(/[\s\-_.,()/]/g, '');
+    .replace(/[\s\-_.,()/*]/g, '');
 }
 
 // ---------------------------------------------------------------------------
@@ -331,7 +330,9 @@ export function applyMapping(
 
   for (const field of ALL_SYSTEM_FIELDS) {
     const fileCol = mapping[field];
-    result[field] = fileCol ? (rawRow[fileCol] ?? undefined) : undefined;
+    result[field] = fileCol
+      ? (rawRow[fileCol.toLowerCase()] ?? undefined)
+      : undefined;
   }
 
   return result;
