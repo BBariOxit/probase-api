@@ -90,7 +90,7 @@ export class TopicsController {
     return this.topicsService.approve(id);
   }
 
-  @Roles('LECTURER', 'ADMIN')
+  @Roles('ADMIN')
   @Patch(':id/open')
   open(
     @Param('id', ParseIntPipe) id: number,
@@ -100,7 +100,7 @@ export class TopicsController {
     return this.topicsService.open(id, userId, role);
   }
 
-  @Roles('LECTURER', 'ADMIN')
+  @Roles('ADMIN')
   @Patch(':id/close')
   close(
     @Param('id', ParseIntPipe) id: number,
