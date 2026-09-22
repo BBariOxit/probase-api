@@ -685,7 +685,7 @@ const PLACEMENT_CLOSED: Record<Exclude<RoundPhase, 'RECONCILING'>, string> = {
   [RoundPhase.PREP]:
     'Cổng đăng ký chưa mở, nên chưa có ai để xếp — sinh viên vẫn đang chờ đến lượt chọn đề tài.',
   [RoundPhase.OPEN]:
-    'Cổng đăng ký còn mở. Danh sách sinh viên chưa có nhóm vẫn đang thay đổi, nên xếp tay lúc này sẽ giẫm lên lựa chọn của các bạn ấy.',
+    'Cổng đăng ký còn mở, danh sách sinh viên chưa chốt nên chưa thể xếp tay.',
   [RoundPhase.EXTENDED]:
     'Đợt đang gia hạn cho các bạn chưa có nhóm. Đợi hết hạn gia hạn rồi xếp, nếu không danh sách sẽ đổi ngay dưới tay bạn.',
   [RoundPhase.FINALIZED]:
