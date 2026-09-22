@@ -28,15 +28,6 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@12345';
 // not survive its own validation rules.
 const DEMO_STUDENTS = [
   {
-    code: process.env.SEED_STUDENT_CODE ?? '2212345',
-    email: (
-      process.env.SEED_STUDENT_EMAIL ??
-      `${process.env.SEED_STUDENT_CODE ?? '2212345'}@dlu.edu.vn`
-    ).toLowerCase(),
-    password: process.env.SEED_STUDENT_PASSWORD ?? 'Student@123',
-    name: 'Nguyễn Văn A',
-  },
-  {
     code: '2288888',
     email: '2288888@dlu.edu.vn',
     password: 'Student@123',
