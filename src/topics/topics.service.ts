@@ -492,6 +492,19 @@ export class TopicsService {
     return this.setStatus(id, TopicStatus.APPROVED);
   }
 
+  async bulkOpen(semesterId: number) {
+    // Guard: the semester must exist — a caller that passes a non-existent id
+    // would silently update zero rows, which is hard to debug.
+    await this.requireSemester(semesterId);
+
+    const result = await this.prisma.topic.updateMany({
+      where: { semesterId, status: TopicStatus.APPROVED },
+      data: { status: TopicStatus.OPEN },
+    });
+
+    return { updated: result.count };
+  }
+
   async open(id: number, userId: number, role: Role) {
     const topic = await this.requireOwnTopic(id, userId, role);
 

@@ -16,6 +16,7 @@ import { CreateTopicDto } from './dto/create-topic.dto';
 import { QueryTopicLecturersDto } from './dto/query-topic-lecturers.dto';
 import { QueryTopicsDto } from './dto/query-topics.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
+import { BulkOpenTopicsDto } from './dto/bulk-open-topics.dto';
 import { TopicsService } from './topics.service';
 
 @Controller('topics')
@@ -52,6 +53,14 @@ export class TopicsController {
   @Post()
   create(@Body() dto: CreateTopicDto, @GetUser('id') userId: number) {
     return this.topicsService.create(dto, userId);
+  }
+
+  // Literal routes must be declared before wildcard :id routes so NestJS does
+  // not swallow 'bulk-open' as a param value and send it to ParseIntPipe.
+  @Roles('ADMIN')
+  @Patch('bulk-open')
+  bulkOpen(@Body() dto: BulkOpenTopicsDto) {
+    return this.topicsService.bulkOpen(dto.semesterId);
   }
 
   @Roles('LECTURER', 'ADMIN')
