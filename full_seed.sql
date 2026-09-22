@@ -1,4 +1,4 @@
-Ôªø--
+--
 -- PostgreSQL database dump
 --
 
@@ -200,7 +200,6 @@ CREATE TYPE public."AllocationMode" AS ENUM (
 );
 
 
-ALTER TYPE public."AllocationMode" OWNER TO probase;
 
 --
 -- Name: CouncilMemberRole; Type: TYPE; Schema: public; Owner: probase
@@ -213,7 +212,6 @@ CREATE TYPE public."CouncilMemberRole" AS ENUM (
 );
 
 
-ALTER TYPE public."CouncilMemberRole" OWNER TO probase;
 
 --
 -- Name: GroupJoinSource; Type: TYPE; Schema: public; Owner: probase
@@ -226,7 +224,6 @@ CREATE TYPE public."GroupJoinSource" AS ENUM (
 );
 
 
-ALTER TYPE public."GroupJoinSource" OWNER TO probase;
 
 --
 -- Name: GroupMemberStatus; Type: TYPE; Schema: public; Owner: probase
@@ -239,7 +236,6 @@ CREATE TYPE public."GroupMemberStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."GroupMemberStatus" OWNER TO probase;
 
 --
 -- Name: NotificationType; Type: TYPE; Schema: public; Owner: probase
@@ -264,7 +260,6 @@ CREATE TYPE public."NotificationType" AS ENUM (
 );
 
 
-ALTER TYPE public."NotificationType" OWNER TO probase;
 
 --
 -- Name: RegistrationGroupStatus; Type: TYPE; Schema: public; Owner: probase
@@ -278,7 +273,6 @@ CREATE TYPE public."RegistrationGroupStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."RegistrationGroupStatus" OWNER TO probase;
 
 --
 -- Name: Role; Type: TYPE; Schema: public; Owner: probase
@@ -291,7 +285,6 @@ CREATE TYPE public."Role" AS ENUM (
 );
 
 
-ALTER TYPE public."Role" OWNER TO probase;
 
 --
 -- Name: RoundPhase; Type: TYPE; Schema: public; Owner: probase
@@ -306,7 +299,6 @@ CREATE TYPE public."RoundPhase" AS ENUM (
 );
 
 
-ALTER TYPE public."RoundPhase" OWNER TO probase;
 
 --
 -- Name: TopicProposalStatus; Type: TYPE; Schema: public; Owner: probase
@@ -319,7 +311,6 @@ CREATE TYPE public."TopicProposalStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."TopicProposalStatus" OWNER TO probase;
 
 --
 -- Name: TopicStatus; Type: TYPE; Schema: public; Owner: probase
@@ -334,7 +325,6 @@ CREATE TYPE public."TopicStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."TopicStatus" OWNER TO probase;
 
 SET default_tablespace = '';
 
@@ -356,7 +346,6 @@ CREATE TABLE public.audit_logs (
 );
 
 
-ALTER TABLE public.audit_logs OWNER TO probase;
 
 --
 -- Name: audit_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -371,7 +360,6 @@ CREATE SEQUENCE public.audit_logs_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.audit_logs_id_seq OWNER TO probase;
 
 --
 -- Name: audit_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -392,7 +380,6 @@ CREATE TABLE public.council_members (
 );
 
 
-ALTER TABLE public.council_members OWNER TO probase;
 
 --
 -- Name: council_members_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -407,7 +394,6 @@ CREATE SEQUENCE public.council_members_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.council_members_id_seq OWNER TO probase;
 
 --
 -- Name: council_members_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -431,7 +417,6 @@ CREATE TABLE public.council_topic_grades (
 );
 
 
-ALTER TABLE public.council_topic_grades OWNER TO probase;
 
 --
 -- Name: council_topic_grades_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -446,7 +431,6 @@ CREATE SEQUENCE public.council_topic_grades_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.council_topic_grades_id_seq OWNER TO probase;
 
 --
 -- Name: council_topic_grades_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -469,7 +453,6 @@ CREATE TABLE public.council_topics (
 );
 
 
-ALTER TABLE public.council_topics OWNER TO probase;
 
 --
 -- Name: council_topics_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -484,7 +467,6 @@ CREATE SEQUENCE public.council_topics_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.council_topics_id_seq OWNER TO probase;
 
 --
 -- Name: council_topics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -507,7 +489,6 @@ CREATE TABLE public.councils (
 );
 
 
-ALTER TABLE public.councils OWNER TO probase;
 
 --
 -- Name: councils_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -522,7 +503,6 @@ CREATE SEQUENCE public.councils_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.councils_id_seq OWNER TO probase;
 
 --
 -- Name: councils_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -548,7 +528,6 @@ CREATE TABLE public.lecturer_profiles (
 );
 
 
-ALTER TABLE public.lecturer_profiles OWNER TO probase;
 
 --
 -- Name: lecturer_profiles_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -563,7 +542,6 @@ CREATE SEQUENCE public.lecturer_profiles_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.lecturer_profiles_id_seq OWNER TO probase;
 
 --
 -- Name: lecturer_profiles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -583,7 +561,6 @@ CREATE TABLE public.majors (
 );
 
 
-ALTER TABLE public.majors OWNER TO probase;
 
 --
 -- Name: majors_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -598,7 +575,6 @@ CREATE SEQUENCE public.majors_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.majors_id_seq OWNER TO probase;
 
 --
 -- Name: majors_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -624,7 +600,6 @@ CREATE TABLE public.notifications (
 );
 
 
-ALTER TABLE public.notifications OWNER TO probase;
 
 --
 -- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -639,7 +614,6 @@ CREATE SEQUENCE public.notifications_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.notifications_id_seq OWNER TO probase;
 
 --
 -- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -661,7 +635,6 @@ CREATE TABLE public.password_reset_tokens (
 );
 
 
-ALTER TABLE public.password_reset_tokens OWNER TO probase;
 
 --
 -- Name: password_reset_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -676,7 +649,6 @@ CREATE SEQUENCE public.password_reset_tokens_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.password_reset_tokens_id_seq OWNER TO probase;
 
 --
 -- Name: password_reset_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -696,7 +668,6 @@ CREATE TABLE public.project_types (
 );
 
 
-ALTER TABLE public.project_types OWNER TO probase;
 
 --
 -- Name: project_types_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -711,7 +682,6 @@ CREATE SEQUENCE public.project_types_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.project_types_id_seq OWNER TO probase;
 
 --
 -- Name: project_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -733,7 +703,6 @@ CREATE TABLE public.refresh_tokens (
 );
 
 
-ALTER TABLE public.refresh_tokens OWNER TO probase;
 
 --
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -748,7 +717,6 @@ CREATE SEQUENCE public.refresh_tokens_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.refresh_tokens_id_seq OWNER TO probase;
 
 --
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -777,7 +745,6 @@ CREATE TABLE public.registration_group_members (
 );
 
 
-ALTER TABLE public.registration_group_members OWNER TO probase;
 
 --
 -- Name: registration_group_members_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -792,7 +759,6 @@ CREATE SEQUENCE public.registration_group_members_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.registration_group_members_id_seq OWNER TO probase;
 
 --
 -- Name: registration_group_members_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -822,7 +788,6 @@ CREATE TABLE public.registration_groups (
 );
 
 
-ALTER TABLE public.registration_groups OWNER TO probase;
 
 --
 -- Name: registration_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -837,7 +802,6 @@ CREATE SEQUENCE public.registration_groups_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.registration_groups_id_seq OWNER TO probase;
 
 --
 -- Name: registration_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -865,7 +829,6 @@ CREATE TABLE public.registration_rounds (
 );
 
 
-ALTER TABLE public.registration_rounds OWNER TO probase;
 
 --
 -- Name: registration_rounds_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -880,7 +843,6 @@ CREATE SEQUENCE public.registration_rounds_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.registration_rounds_id_seq OWNER TO probase;
 
 --
 -- Name: registration_rounds_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -900,7 +862,6 @@ CREATE TABLE public.round_eligibilities (
 );
 
 
-ALTER TABLE public.round_eligibilities OWNER TO probase;
 
 --
 -- Name: round_eligibilities_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -915,7 +876,6 @@ CREATE SEQUENCE public.round_eligibilities_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.round_eligibilities_id_seq OWNER TO probase;
 
 --
 -- Name: round_eligibilities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -942,7 +902,6 @@ CREATE TABLE public.semesters (
 );
 
 
-ALTER TABLE public.semesters OWNER TO probase;
 
 --
 -- Name: semesters_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -957,7 +916,6 @@ CREATE SEQUENCE public.semesters_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.semesters_id_seq OWNER TO probase;
 
 --
 -- Name: semesters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -984,7 +942,6 @@ CREATE TABLE public.student_profiles (
 );
 
 
-ALTER TABLE public.student_profiles OWNER TO probase;
 
 --
 -- Name: student_profiles_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -999,7 +956,6 @@ CREATE SEQUENCE public.student_profiles_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.student_profiles_id_seq OWNER TO probase;
 
 --
 -- Name: student_profiles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1024,7 +980,6 @@ CREATE TABLE public.submission_requirements (
 );
 
 
-ALTER TABLE public.submission_requirements OWNER TO probase;
 
 --
 -- Name: submission_requirements_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -1039,7 +994,6 @@ CREATE SEQUENCE public.submission_requirements_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.submission_requirements_id_seq OWNER TO probase;
 
 --
 -- Name: submission_requirements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1070,7 +1024,6 @@ CREATE TABLE public.submissions (
 );
 
 
-ALTER TABLE public.submissions OWNER TO probase;
 
 --
 -- Name: submissions_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -1085,7 +1038,6 @@ CREATE SEQUENCE public.submissions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.submissions_id_seq OWNER TO probase;
 
 --
 -- Name: submissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1115,7 +1067,6 @@ CREATE TABLE public.topic_proposals (
 );
 
 
-ALTER TABLE public.topic_proposals OWNER TO probase;
 
 --
 -- Name: topic_proposals_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -1130,7 +1081,6 @@ CREATE SEQUENCE public.topic_proposals_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.topic_proposals_id_seq OWNER TO probase;
 
 --
 -- Name: topic_proposals_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1159,7 +1109,6 @@ CREATE TABLE public.topics (
 );
 
 
-ALTER TABLE public.topics OWNER TO probase;
 
 --
 -- Name: topics_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -1174,7 +1123,6 @@ CREATE SEQUENCE public.topics_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.topics_id_seq OWNER TO probase;
 
 --
 -- Name: topics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1203,7 +1151,6 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO probase;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: probase
@@ -1218,7 +1165,6 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.users_id_seq OWNER TO probase;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: probase
@@ -1386,27 +1332,27 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.audit_logs (id, "userId", action, "targetTable", "targetId", "oldValue", "newValue", "createdAt") FROM stdin;
-1	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": []}	{"requirements": [{"name": "Slide b√ü‚ïë√∫o v√ü‚ïó√ß", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:21:05.713
-2	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "Slide b√ü‚ïë√∫o v√ü‚ïó√ß", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:46:59.153
-3	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:50:42.699
-4	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:51:15.544
-5	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:53:32.949
-6	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:54:51.965
-7	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:58:27.391
-8	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:00:47.965
-9	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:01:05.69
-10	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:04:28.789
-11	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	2	{"requirements": []}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:04:48.9
-12	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	3	{"requirements": []}	{"requirements": [{"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "B‚îú√≠o c‚îú√≠o", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:05:22.609
+1	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": []}	{"requirements": [{"name": "Slide bﬂ¶˙o vﬂ+Á", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:21:05.713
+2	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "Slide bﬂ¶˙o vﬂ+Á", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:46:59.153
+3	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:50:42.699
+4	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:51:15.544
+5	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:53:32.949
+6	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:54:51.965
+7	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 03:58:27.391
+8	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:00:47.965
+9	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:01:05.69
+10	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:04:28.789
+11	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	2	{"requirements": []}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:04:48.9
+12	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	3	{"requirements": []}	{"requirements": [{"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "B+Ìo c+Ìo", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:05:22.609
 13	1	SET_SEMESTER_ROUNDS	semesters	1	{"rounds": [{"projectTypeId": 1, "registrationEnd": "2026-10-12T02:45:19.697Z", "registrationStart": "2026-09-14T02:45:19.697Z"}, {"projectTypeId": 2, "registrationEnd": "2026-10-12T02:45:19.733Z", "registrationStart": "2026-09-14T02:45:19.733Z"}, {"projectTypeId": 3, "registrationEnd": "2026-10-05T02:45:19.749Z", "registrationStart": "2026-09-14T02:45:19.749Z"}]}	{"rounds": [{"cohorts": ["2023"], "projectTypeId": 2, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2024"], "projectTypeId": 1, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2022"], "projectTypeId": 3, "registrationEnd": "2026-10-05T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}]}	2026-09-21 04:05:32.998
 14	1	SET_SEMESTER_ROUNDS	semesters	1	{"rounds": [{"projectTypeId": 1, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"projectTypeId": 2, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"projectTypeId": 3, "registrationEnd": "2026-10-05T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}]}	{"rounds": [{"cohorts": ["2023"], "projectTypeId": 2, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2024"], "projectTypeId": 1, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2022"], "projectTypeId": 3, "registrationEnd": "2026-10-05T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}]}	2026-09-21 04:05:37.72
 15	1	SET_SEMESTER_ROUNDS	semesters	1	{"rounds": [{"projectTypeId": 1, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"projectTypeId": 2, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"projectTypeId": 3, "registrationEnd": "2026-10-05T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}]}	{"rounds": [{"cohorts": ["2023"], "projectTypeId": 2, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2024"], "projectTypeId": 1, "registrationEnd": "2026-10-12T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}, {"cohorts": ["2022"], "projectTypeId": 3, "registrationEnd": "2026-10-05T00:00:00.000Z", "registrationStart": "2026-09-14T00:00:00.000Z"}]}	2026-09-21 04:08:54.822
-16	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:31.87
-17	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	2	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:35.309
-18	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	3	{"requirements": [{"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "B‚îú√≠o c‚îú√≠o", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "M‚îú√∫ ngu√ü‚ïó√¥n", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "B‚îú√≠o c‚îú√≠o", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:36.726
-19	1	UPDATE_STUDENT_PROFILE	student_profiles	1	{"class": "CTK46", "cohort": "2022", "fullName": "Nguy√ü‚ïó√†n V‚îÄ√¢n A", "studentCode": "2212345"}	{"class": "CTK46", "cohort": "2022", "fullName": "Nguy√ü‚ïó√†n V‚îÄ√¢n A", "studentCode": "2299999"}	2026-09-21 07:42:26.609
+16	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	1	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-01T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:31.87
+17	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	2	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-10-02T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:35.309
+18	1	SET_SUBMISSION_REQUIREMENTS	registration_rounds	3	{"requirements": [{"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "B+Ìo c+Ìo", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	{"requirements": [{"name": "Slide", "dueAt": "2026-10-08T00:00:00.000Z", "isRequired": true}, {"name": "M+˙ nguﬂ+Ùn", "dueAt": "2026-11-06T00:00:00.000Z", "isRequired": true}, {"name": "-…ﬂ+¸ c¶¶¶Ìng", "dueAt": "2026-09-24T00:00:00.000Z", "isRequired": true}, {"name": "B+Ìo c+Ìo", "dueAt": "2026-10-10T00:00:00.000Z", "isRequired": true}]}	2026-09-21 04:18:36.726
+19	1	UPDATE_STUDENT_PROFILE	student_profiles	1	{"class": "CTK46", "cohort": "2022", "fullName": "Nguyﬂ+‡n V-‚n A", "studentCode": "2212345"}	{"class": "CTK46", "cohort": "2022", "fullName": "Nguyﬂ+‡n V-‚n A", "studentCode": "2299999"}	2026-09-21 07:42:26.609
 20	1	UPDATE_USER	users	2	{"email": "2212345@dlu.edu.vn"}	{"email": "2277777@dlu.edu.vn"}	2026-09-21 07:42:51.587
-21	1	UPDATE_STUDENT_PROFILE	student_profiles	1	{"class": "CTK46", "cohort": "2022", "fullName": "Nguy√ü‚ïó√†n V‚îÄ√¢n A", "studentCode": "2299999"}	{"class": "CTK46", "cohort": "2022", "fullName": "Nguy√ü‚ïó√†n V‚îÄ√¢n A", "studentCode": "2277777"}	2026-09-21 07:42:57.946
+21	1	UPDATE_STUDENT_PROFILE	student_profiles	1	{"class": "CTK46", "cohort": "2022", "fullName": "Nguyﬂ+‡n V-‚n A", "studentCode": "2299999"}	{"class": "CTK46", "cohort": "2022", "fullName": "Nguyﬂ+‡n V-‚n A", "studentCode": "2277777"}	2026-09-21 07:42:57.946
 22	1	CREATE_USER	users	8	\N	{"role": "STUDENT", "email": "2212345@dlu.edu.vn"}	2026-09-21 07:50:27.25
 23	1	DELETE_USER	users	8	{"role": "STUDENT", "email": "2212345@dlu.edu.vn"}	\N	2026-09-21 07:58:37.732
 24	1	CREATE_USER	users	9	\N	{"role": "STUDENT", "email": "2212345@dlu.edu.vn"}	2026-09-21 08:03:16.057
@@ -1463,11 +1409,11 @@ COPY public.councils (id, "semesterId", name, location, "defenseDate", "createdA
 --
 
 COPY public.lecturer_profiles (id, "userId", "lecturerCode", "fullName", "academicTitle", phone, bio, "researchInterests", "maxMentoringQuota") FROM stdin;
-1	3	GV001	Tr√ü‚ïë¬∫n Th√ü‚ïó√Ø B	TS	\N	\N	K√ü‚ïó‚ï£ thu√ü‚ïë¬°t ph√ü‚ïë¬∫n m√ü‚ïó√ºm, ki√ü‚ïó√¢m th√ü‚ïó¬° t√ü‚ïó‚ñí ‚îÄ√¶√ü‚ïó√ñng	\N
-2	4	GV002	L‚îú¬¨ V‚îÄ√¢n C	ThS	\N	\N	H√ü‚ïó√ß th√ü‚ïó√¶ng th‚îú‚î§ng tin, c‚ïû√≠ s√ü‚ïó∆í d√ü‚ïó¬ª li√ü‚ïó√ßu	\N
-9	16	GV657467	Phan Th‚îú√≠i B√ü‚ïë√∫o	\N	\N	\N	\N	\N
+1	3	GV001	Trﬂ¶∫n Thﬂ+Ô B	TS	\N	\N	Kﬂ+¶ thuﬂ¶°t phﬂ¶∫n mﬂ+¸m, kiﬂ+‚m thﬂ+° tﬂ+¶ -Êﬂ+÷ng	\N
+2	4	GV002	L+¨ V-‚n C	ThS	\N	\N	Hﬂ+Á thﬂ+Êng th+¶ng tin, c¶Ì sﬂ+É dﬂ+ª liﬂ+Áu	\N
+9	16	GV657467	Phan Th+Ìi Bﬂ¶˙o	\N	\N	\N	\N	\N
 10	17	GV759969	Sun Alex	\N	\N	\N	\N	\N
-11	18	GV919576	B√ü‚ïë√∫o Phan	\N	\N	\N	\N	\N
+11	18	GV919576	Bﬂ¶˙o Phan	\N	\N	\N	\N	\N
 \.
 
 
@@ -1476,12 +1422,12 @@ COPY public.lecturer_profiles (id, "userId", "lecturerCode", "fullName", "academ
 --
 
 COPY public.majors (id, name, code) FROM stdin;
-1	K√ü‚ïó‚ï£ thu√ü‚ïë¬°t Ph√ü‚ïë¬∫n m√ü‚ïó√ºm	KTPM
-2	H√ü‚ïó√ß th√ü‚ïó√¶ng Th‚îú‚î§ng tin	HTTT
-3	Khoa h√ü‚ïó√¨c M‚îú√≠y t‚îú¬°nh	KHMT
-4	Tr‚îú¬° tu√ü‚ïó√ß Nh‚îú√≥n t√ü‚ïë√≠o	TTNT
-5	M√ü‚ïë√≠ng m‚îú√≠y t‚îú¬°nh v‚îú√° Truy√ü‚ïó√ºn th‚îú‚î§ng	MMT
-6	An to‚îú√°n Th‚îú‚î§ng tin	ATTT
+1	Kﬂ+¶ thuﬂ¶°t Phﬂ¶∫n mﬂ+¸m	KTPM
+2	Hﬂ+Á thﬂ+Êng Th+¶ng tin	HTTT
+3	Khoa hﬂ+Ïc M+Ìy t+°nh	KHMT
+4	Tr+° tuﬂ+Á Nh+Ûn tﬂ¶Ìo	TTNT
+5	Mﬂ¶Ìng m+Ìy t+°nh v+· Truyﬂ+¸n th+¶ng	MMT
+6	An to+·n Th+¶ng tin	ATTT
 \.
 
 
@@ -1490,14 +1436,14 @@ COPY public.majors (id, name, code) FROM stdin;
 --
 
 COPY public.notifications (id, "userId", type, title, content, "targetId", "isRead", "createdAt", "dedupeKey") FROM stdin;
-1	2	GROUP_MEMBER_JOINED	C‚îú‚îÇ ng‚ïû‚ñë√ü‚ïó¬•i tham gia nh‚îú‚îÇm c√ü‚ïó¬∫a b√ü‚ïë√≠n	phanbao v√ü‚ïó¬Ωa v‚îú√°o nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5".	2	f	2026-09-21 08:16:41.478	\N
-2	9	GROUP_MEMBER_REMOVED	B√ü‚ïë√≠n ‚îÄ√¶‚îú√∫ b√ü‚ïó√Ø ‚îÄ√¶‚ïû‚ñëa ra kh√ü‚ïó√Öi nh‚îú‚îÇm	Tr‚ïû‚ñë√ü‚ïó∆íng nh‚îú‚îÇm ‚îÄ√¶‚îú√∫ ‚îÄ√¶‚ïû‚ñëa b√ü‚ïë√≠n ra kh√ü‚ïó√Öi nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5". N√ü‚ïë‚îêu c√ü‚ïó√≤ng ‚îÄ√¶‚îÄ√¢ng k‚îú‚ïú c‚îú‚ñìn m√ü‚ïó∆í, b√ü‚ïë√≠n c‚îú‚îÇ th√ü‚ïó√¢ ch√ü‚ïó√¨n m√ü‚ïó√ñt ‚îÄ√¶√ü‚ïó√º t‚îú√°i kh‚îú√≠c.	5	t	2026-09-21 08:17:13.617	\N
-3	2	GROUP_MEMBER_JOINED	C‚îú‚îÇ ng‚ïû‚ñë√ü‚ïó¬•i tham gia nh‚îú‚îÇm c√ü‚ïó¬∫a b√ü‚ïë√≠n	phanbao v√ü‚ïó¬Ωa v‚îú√°o nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5".	2	f	2026-09-21 08:18:27.166	\N
-6	9	GROUP_MEMBER_REMOVED	B√ü‚ïë√≠n ‚îÄ√¶‚îú√∫ b√ü‚ïó√Ø ‚îÄ√¶‚ïû‚ñëa ra kh√ü‚ïó√Öi nh‚îú‚îÇm	Tr‚ïû‚ñë√ü‚ïó∆íng nh‚îú‚îÇm ‚îÄ√¶‚îú√∫ ‚îÄ√¶‚ïû‚ñëa b√ü‚ïë√≠n ra kh√ü‚ïó√Öi nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5". N√ü‚ïë‚îêu c√ü‚ïó√≤ng ‚îÄ√¶‚îÄ√¢ng k‚îú‚ïú c‚îú‚ñìn m√ü‚ïó∆í, b√ü‚ïë√≠n c‚îú‚îÇ th√ü‚ïó√¢ ch√ü‚ïó√¨n m√ü‚ïó√ñt ‚îÄ√¶√ü‚ïó√º t‚îú√°i kh‚îú√≠c.	5	t	2026-09-21 08:36:38.29	\N
-4	9	GROUP_MEMBER_REMOVED	B√ü‚ïë√≠n ‚îÄ√¶‚îú√∫ b√ü‚ïó√Ø ‚îÄ√¶‚ïû‚ñëa ra kh√ü‚ïó√Öi nh‚îú‚îÇm	Tr‚ïû‚ñë√ü‚ïó∆íng nh‚îú‚îÇm ‚îÄ√¶‚îú√∫ ‚îÄ√¶‚ïû‚ñëa b√ü‚ïë√≠n ra kh√ü‚ïó√Öi nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5". N√ü‚ïë‚îêu c√ü‚ïó√≤ng ‚îÄ√¶‚îÄ√¢ng k‚îú‚ïú c‚îú‚ñìn m√ü‚ïó∆í, b√ü‚ïë√≠n c‚îú‚îÇ th√ü‚ïó√¢ ch√ü‚ïó√¨n m√ü‚ïó√ñt ‚îÄ√¶√ü‚ïó√º t‚îú√°i kh‚îú√≠c.	5	t	2026-09-21 08:26:13.86	\N
-8	2	GROUP_MEMBER_JOINED	C‚îú‚îÇ ng‚ïû‚ñë√ü‚ïó¬•i tham gia nh‚îú‚îÇm c√ü‚ïó¬∫a b√ü‚ïë√≠n	phanbao v√ü‚ïó¬Ωa v‚îú√°o nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5".	2	t	2026-09-21 08:40:05.089	\N
-7	2	GROUP_MEMBER_JOINED	C‚îú‚îÇ ng‚ïû‚ñë√ü‚ïó¬•i tham gia nh‚îú‚îÇm c√ü‚ïó¬∫a b√ü‚ïë√≠n	Ph√ü‚ïë√≠m Th√ü‚ïó√Ø B v√ü‚ïó¬Ωa v‚îú√°o nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5".	2	t	2026-09-21 08:37:28.174	\N
-5	2	GROUP_MEMBER_JOINED	C‚îú‚îÇ ng‚ïû‚ñë√ü‚ïó¬•i tham gia nh‚îú‚îÇm c√ü‚ïó¬∫a b√ü‚ïë√≠n	phanbao v√ü‚ïó¬Ωa v‚îú√°o nh‚îú‚îÇm ‚îÄ√¶√ü‚ïó√º t‚îú√°i "test5".	2	t	2026-09-21 08:36:22.155	\N
+1	2	GROUP_MEMBER_JOINED	C+¶ ng¶¶ﬂ+•i tham gia nh+¶m cﬂ+∫a bﬂ¶Ìn	phanbao vﬂ+Ωa v+·o nh+¶m -Êﬂ+¸ t+·i "test5".	2	f	2026-09-21 08:16:41.478	\N
+2	9	GROUP_MEMBER_REMOVED	Bﬂ¶Ìn -Ê+˙ bﬂ+Ô -Ê¶¶a ra khﬂ+≈i nh+¶m	Tr¶¶ﬂ+Éng nh+¶m -Ê+˙ -Ê¶¶a bﬂ¶Ìn ra khﬂ+≈i nh+¶m -Êﬂ+¸ t+·i "test5". Nﬂ¶+u cﬂ+Úng -Ê-‚ng k++ c+¶n mﬂ+É, bﬂ¶Ìn c+¶ thﬂ+‚ chﬂ+Ïn mﬂ+÷t -Êﬂ+¸ t+·i kh+Ìc.	5	t	2026-09-21 08:17:13.617	\N
+3	2	GROUP_MEMBER_JOINED	C+¶ ng¶¶ﬂ+•i tham gia nh+¶m cﬂ+∫a bﬂ¶Ìn	phanbao vﬂ+Ωa v+·o nh+¶m -Êﬂ+¸ t+·i "test5".	2	f	2026-09-21 08:18:27.166	\N
+6	9	GROUP_MEMBER_REMOVED	Bﬂ¶Ìn -Ê+˙ bﬂ+Ô -Ê¶¶a ra khﬂ+≈i nh+¶m	Tr¶¶ﬂ+Éng nh+¶m -Ê+˙ -Ê¶¶a bﬂ¶Ìn ra khﬂ+≈i nh+¶m -Êﬂ+¸ t+·i "test5". Nﬂ¶+u cﬂ+Úng -Ê-‚ng k++ c+¶n mﬂ+É, bﬂ¶Ìn c+¶ thﬂ+‚ chﬂ+Ïn mﬂ+÷t -Êﬂ+¸ t+·i kh+Ìc.	5	t	2026-09-21 08:36:38.29	\N
+4	9	GROUP_MEMBER_REMOVED	Bﬂ¶Ìn -Ê+˙ bﬂ+Ô -Ê¶¶a ra khﬂ+≈i nh+¶m	Tr¶¶ﬂ+Éng nh+¶m -Ê+˙ -Ê¶¶a bﬂ¶Ìn ra khﬂ+≈i nh+¶m -Êﬂ+¸ t+·i "test5". Nﬂ¶+u cﬂ+Úng -Ê-‚ng k++ c+¶n mﬂ+É, bﬂ¶Ìn c+¶ thﬂ+‚ chﬂ+Ïn mﬂ+÷t -Êﬂ+¸ t+·i kh+Ìc.	5	t	2026-09-21 08:26:13.86	\N
+8	2	GROUP_MEMBER_JOINED	C+¶ ng¶¶ﬂ+•i tham gia nh+¶m cﬂ+∫a bﬂ¶Ìn	phanbao vﬂ+Ωa v+·o nh+¶m -Êﬂ+¸ t+·i "test5".	2	t	2026-09-21 08:40:05.089	\N
+7	2	GROUP_MEMBER_JOINED	C+¶ ng¶¶ﬂ+•i tham gia nh+¶m cﬂ+∫a bﬂ¶Ìn	Phﬂ¶Ìm Thﬂ+Ô B vﬂ+Ωa v+·o nh+¶m -Êﬂ+¸ t+·i "test5".	2	t	2026-09-21 08:37:28.174	\N
+5	2	GROUP_MEMBER_JOINED	C+¶ ng¶¶ﬂ+•i tham gia nh+¶m cﬂ+∫a bﬂ¶Ìn	phanbao vﬂ+Ωa v+·o nh+¶m -Êﬂ+¸ t+·i "test5".	2	t	2026-09-21 08:36:22.155	\N
 \.
 
 
@@ -1514,9 +1460,9 @@ COPY public.password_reset_tokens (id, "userId", "tokenHash", "expiresAt", "crea
 --
 
 COPY public.project_types (id, name, code) FROM stdin;
-1	‚îÄ√â√ü‚ïó√¥ ‚îú√≠n C‚ïû√≠ s√ü‚ïó∆í	DACS
-2	‚îÄ√â√ü‚ïó√¥ ‚îú√≠n Chuy‚îú¬¨n ng‚îú√°nh	DACN
-3	‚îÄ√â√ü‚ïó√¥ ‚îú√≠n T√ü‚ïó√¶t nghi√ü‚ïó√ßp	DATN
+1	-…ﬂ+Ù +Ìn C¶Ì sﬂ+É	DACS
+2	-…ﬂ+Ù +Ìn Chuy+¨n ng+·nh	DACN
+3	-…ﬂ+Ù +Ìn Tﬂ+Êt nghiﬂ+Áp	DATN
 \.
 
 
@@ -1583,7 +1529,7 @@ COPY public.round_eligibilities (id, "roundId", cohort) FROM stdin;
 --
 
 COPY public.semesters (id, name, code, "startDate", "endDate", "gradeSubmissionDeadline", "isActive", "mentorWeight", "reviewerWeight", "councilWeight") FROM stdin;
-1	H√ü‚ïó√¨c k√ü‚ïó‚îÇ 1 n‚îÄ√¢m h√ü‚ïó√¨c 2026-2027	HK1-2026-2027	2026-08-22 02:45:19.676	2027-01-19 02:45:19.676	2027-01-09 02:45:19.676	t	0.4	0.3	0.3
+1	Hﬂ+Ïc kﬂ+¶ 1 n-‚m hﬂ+Ïc 2026-2027	HK1-2026-2027	2026-08-22 02:45:19.676	2027-01-19 02:45:19.676	2027-01-09 02:45:19.676	t	0.4	0.3	0.3
 \.
 
 
@@ -1592,9 +1538,9 @@ COPY public.semesters (id, name, code, "startDate", "endDate", "gradeSubmissionD
 --
 
 COPY public.student_profiles (id, "userId", "majorId", "studentCode", "fullName", class, cohort, phone, bio, note) FROM stdin;
-1	2	1	2277777	Nguy√ü‚ïó√†n V‚îÄ√¢n A	CTK46	2022	\N	\N	\N
-5	6	1	2288888	Ph√ü‚ïë√≠m Th√ü‚ïó√Ø B	CTK46	2022	\N	\N	\N
-6	7	1	2299999	L‚îú¬¨ V‚îÄ√¢n C	CTK46	2022	\N	\N	\N
+1	2	1	2277777	Nguyﬂ+‡n V-‚n A	CTK46	2022	\N	\N	\N
+5	6	1	2288888	Phﬂ¶Ìm Thﬂ+Ô B	CTK46	2022	\N	\N	\N
+6	7	1	2299999	L+¨ V-‚n C	CTK46	2022	\N	\N	\N
 8	9	1	2212345	phanbao	CTK46B	2022	\N	\N	\N
 \.
 
@@ -1604,13 +1550,13 @@ COPY public.student_profiles (id, "userId", "majorId", "studentCode", "fullName"
 --
 
 COPY public.submission_requirements (id, "roundId", name, "dueAt", "isRequired", "sortOrder", "createdAt", "updatedAt") FROM stdin;
-1	1	‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng	2026-10-01 00:00:00	t	0	2026-09-21 03:21:05.689	2026-09-21 04:18:31.864
-2	1	M‚îú√∫ ngu√ü‚ïó√¥n	2026-10-02 00:00:00	t	1	2026-09-21 03:54:51.958	2026-09-21 04:18:31.868
-3	2	‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng	2026-10-02 00:00:00	t	0	2026-09-21 04:04:48.896	2026-09-21 04:18:35.308
+1	1	-…ﬂ+¸ c¶¶¶Ìng	2026-10-01 00:00:00	t	0	2026-09-21 03:21:05.689	2026-09-21 04:18:31.864
+2	1	M+˙ nguﬂ+Ùn	2026-10-02 00:00:00	t	1	2026-09-21 03:54:51.958	2026-09-21 04:18:31.868
+3	2	-…ﬂ+¸ c¶¶¶Ìng	2026-10-02 00:00:00	t	0	2026-09-21 04:04:48.896	2026-09-21 04:18:35.308
 4	3	Slide	2026-10-08 00:00:00	t	0	2026-09-21 04:05:22.594	2026-09-21 04:18:36.721
-5	3	M‚îú√∫ ngu√ü‚ïó√¥n	2026-11-06 00:00:00	t	1	2026-09-21 04:05:22.596	2026-09-21 04:18:36.722
-6	3	‚îÄ√â√ü‚ïó√º c‚ïû‚ñë‚ïû√≠ng	2026-09-24 00:00:00	t	2	2026-09-21 04:05:22.599	2026-09-21 04:18:36.723
-7	3	B‚îú√≠o c‚îú√≠o	2026-10-10 00:00:00	t	3	2026-09-21 04:05:22.607	2026-09-21 04:18:36.725
+5	3	M+˙ nguﬂ+Ùn	2026-11-06 00:00:00	t	1	2026-09-21 04:05:22.596	2026-09-21 04:18:36.722
+6	3	-…ﬂ+¸ c¶¶¶Ìng	2026-09-24 00:00:00	t	2	2026-09-21 04:05:22.599	2026-09-21 04:18:36.723
+7	3	B+Ìo c+Ìo	2026-10-10 00:00:00	t	3	2026-09-21 04:05:22.607	2026-09-21 04:18:36.725
 \.
 
 
