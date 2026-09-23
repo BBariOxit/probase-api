@@ -258,97 +258,157 @@ async function main() {
   });
 
   if (lecturerUser?.lecturerProfile) {
-    // Prevent endlessly creating these on every re-seed
-    await prisma.topic.deleteMany({
+    const existingTopicsCount = await prisma.topic.count({
       where: {
         lecturerId: lecturerUser.lecturerProfile.id,
         semesterId: semester.id,
       },
     });
 
-    const rounds = await prisma.registrationRound.findMany({
-      where: { semesterId: semester.id },
-      include: { projectType: true },
-    });
+    let topicCount = existingTopicsCount;
 
-    const topicDataByRound: Record<
-      string,
-      Array<{ title: string; description: string; expectedOutcomes: string }>
-    > = {
-      DACS: [
-        {
-          title: 'Xây dựng website quản lý thư viện cá nhân',
-          description:
-            'Sinh viên sẽ xây dựng một website cơ bản cho phép người dùng thêm, sửa, xóa và tìm kiếm sách trong thư viện cá nhân của họ. Yêu cầu giao diện thân thiện và dễ sử dụng.',
-          expectedOutcomes:
-            'Source code website, báo cáo quá trình thực hiện và các chức năng cơ bản hoạt động tốt.',
-        },
-        {
-          title: 'Phát triển ứng dụng di động ghi chú công việc (To-do app)',
-          description:
-            'Ứng dụng di động đơn giản giúp người dùng quản lý các công việc hàng ngày, đặt lịch nhắc nhở và đánh dấu hoàn thành. Phù hợp để làm quen với lập trình di động.',
-          expectedOutcomes:
-            'File cài đặt ứng dụng (APK hoặc tương đương), mã nguồn và tài liệu mô tả.',
-        },
-      ],
-      DACN: [
-        {
-          title: 'Hệ thống gợi ý sản phẩm dựa trên hành vi người dùng',
-          description:
-            'Nghiên cứu và áp dụng các thuật toán Machine Learning cơ bản để xây dựng hệ thống gợi ý sản phẩm cho một trang thương mại điện tử mô phỏng.',
-          expectedOutcomes:
-            'Báo cáo nghiên cứu thuật toán, API hệ thống gợi ý và demo tích hợp trên web.',
-        },
-        {
-          title: 'Ứng dụng điểm danh sinh viên bằng nhận diện khuôn mặt',
-          description:
-            'Phát triển một ứng dụng hỗ trợ điểm danh tự động thông qua camera, sử dụng các thư viện nhận diện khuôn mặt (Computer Vision).',
-          expectedOutcomes:
-            'Hệ thống điểm danh hoàn chỉnh, báo cáo đánh giá độ chính xác của mô hình.',
-        },
-      ],
-      DATN: [
-        {
-          title: 'Nền tảng học trực tuyến tích hợp AI đánh giá năng lực',
-          description:
-            'Xây dựng một nền tảng E-learning toàn diện. Tích hợp thêm AI để tự động phân tích và đưa ra lộ trình học tập cá nhân hóa dựa trên kết quả bài test của học viên.',
-          expectedOutcomes:
-            'Hệ thống web/app hoàn chỉnh (Frontend & Backend), mô hình AI phân tích, báo cáo đồ án tốt nghiệp.',
-        },
-        {
-          title:
-            'Hệ thống quản lý chuỗi cung ứng thông minh sử dụng Blockchain',
-          description:
-            'Nghiên cứu ứng dụng công nghệ Blockchain (Smart Contracts) vào việc truy xuất nguồn gốc và quản lý chuỗi cung ứng hàng hóa một cách minh bạch và an toàn.',
-          expectedOutcomes:
-            'Smart contract đã deploy trên testnet, DApp giao diện người dùng, báo cáo nghiên cứu chuyên sâu.',
-        },
-      ],
-    };
+    if (existingTopicsCount === 0) {
+      const rounds = await prisma.registrationRound.findMany({
+        where: { semesterId: semester.id },
+        include: { projectType: true },
+      });
 
-    let topicCount = 0;
-    for (const round of rounds) {
-      const typeCode = round.projectType.code;
-      const tDataList = topicDataByRound[typeCode] || [];
-
-      for (const tData of tDataList) {
-        await prisma.topic.create({
-          data: {
-            title: tData.title,
-            description: tData.description,
-            expectedOutcomes: tData.expectedOutcomes,
-            maxStudents: typeCode === 'DATN' ? 2 : 3,
-            status: 'PENDING',
-            semesterId: semester.id,
-            roundId: round.id,
-            lecturerId: lecturerUser.lecturerProfile.id,
+      const topicDataByRound: Record<
+        string,
+        Array<{ title: string; description: string; expectedOutcomes: string }>
+      > = {
+        DACS: [
+          {
+            title: 'Xây dựng website quản lý thư viện cá nhân',
+            description:
+              'Sinh viên sẽ xây dựng một website cơ bản cho phép người dùng thêm, sửa, xóa và tìm kiếm sách trong thư viện cá nhân của họ. Yêu cầu giao diện thân thiện và dễ sử dụng.',
+            expectedOutcomes:
+              'Source code website, báo cáo quá trình thực hiện và các chức năng cơ bản hoạt động tốt.',
           },
-        });
-        topicCount++;
+          {
+            title: 'Phát triển ứng dụng di động ghi chú công việc (To-do app)',
+            description:
+              'Ứng dụng di động đơn giản giúp người dùng quản lý các công việc hàng ngày, đặt lịch nhắc nhở và đánh dấu hoàn thành. Phù hợp để làm quen với lập trình di động.',
+            expectedOutcomes:
+              'File cài đặt ứng dụng (APK hoặc tương đương), mã nguồn và tài liệu mô tả.',
+          },
+        ],
+        DACN: [
+          {
+            title: 'Hệ thống gợi ý sản phẩm dựa trên hành vi người dùng',
+            description:
+              'Nghiên cứu và áp dụng các thuật toán Machine Learning cơ bản để xây dựng hệ thống gợi ý sản phẩm cho một trang thương mại điện tử mô phỏng.',
+            expectedOutcomes:
+              'Báo cáo nghiên cứu thuật toán, API hệ thống gợi ý và demo tích hợp trên web.',
+          },
+          {
+            title: 'Ứng dụng điểm danh sinh viên bằng nhận diện khuôn mặt',
+            description:
+              'Phát triển một ứng dụng hỗ trợ điểm danh tự động thông qua camera, sử dụng các thư viện nhận diện khuôn mặt (Computer Vision).',
+            expectedOutcomes:
+              'Hệ thống điểm danh hoàn chỉnh, báo cáo đánh giá độ chính xác của mô hình.',
+          },
+        ],
+        DATN: [
+          {
+            title: 'Nền tảng học trực tuyến tích hợp AI đánh giá năng lực',
+            description:
+              'Xây dựng một nền tảng E-learning toàn diện. Tích hợp thêm AI để tự động phân tích và đưa ra lộ trình học tập cá nhân hóa dựa trên kết quả bài test của học viên.',
+            expectedOutcomes:
+              'Hệ thống web/app hoàn chỉnh (Frontend & Backend), mô hình AI phân tích, báo cáo đồ án tốt nghiệp.',
+          },
+          {
+            title:
+              'Hệ thống quản lý chuỗi cung ứng thông minh sử dụng Blockchain',
+            description:
+              'Nghiên cứu ứng dụng công nghệ Blockchain (Smart Contracts) vào việc truy xuất nguồn gốc và quản lý chuỗi cung ứng hàng hóa một cách minh bạch và an toàn.',
+            expectedOutcomes:
+              'Smart contract đã deploy trên testnet, DApp giao diện người dùng, báo cáo nghiên cứu chuyên sâu.',
+          },
+        ],
+      };
+
+      for (const round of rounds) {
+        const typeCode = round.projectType.code;
+        const tDataList = topicDataByRound[typeCode] || [];
+
+        for (const tData of tDataList) {
+          await prisma.topic.create({
+            data: {
+              title: tData.title,
+              description: tData.description,
+              expectedOutcomes: tData.expectedOutcomes,
+              maxStudents: typeCode === 'DATN' ? 2 : 3,
+              status: 'PENDING',
+              semesterId: semester.id,
+              roundId: round.id,
+              lecturerId: lecturerUser.lecturerProfile.id,
+            },
+          });
+          topicCount++;
+        }
+        // End of topic creation loop
       }
     }
     console.log(
       `  demo topics: ${topicCount} (by ${lecturerUser.lecturerProfile.fullName})`,
+    );
+  }
+
+  // Seed topic proposals for demo students
+  const targetLecturer = await prisma.user.findUnique({
+    where: { email: 'gv002@probase.dev' },
+    include: { lecturerProfile: true },
+  });
+
+  const proposalTitles = [
+    'Ứng dụng học từ vựng tiếng Nhật',
+    'Website đánh giá phim ảnh',
+    'Phần mềm hỗ trợ quản lý nhà trọ',
+    'Hệ thống giám sát sinh viên bằng thẻ từ',
+  ];
+
+  if (targetLecturer?.lecturerProfile) {
+    const existingProposals = await prisma.topicProposal.count({
+      where: { semesterId: semester.id },
+    });
+
+    let proposalCount = existingProposals;
+
+    if (existingProposals === 0) {
+      let baseProjectType = await prisma.projectType.findUnique({
+        where: { code: 'DACS' },
+      });
+      if (!baseProjectType) {
+        baseProjectType = (await prisma.projectType.findFirst())!;
+      }
+
+      for (let i = 0; i < DEMO_STUDENTS.length; i++) {
+        const studentEmail = DEMO_STUDENTS[i].email;
+        const studentUser = await prisma.user.findUnique({
+          where: { email: studentEmail },
+          include: { studentProfile: true },
+        });
+
+        if (studentUser?.studentProfile) {
+          await prisma.topicProposal.create({
+            data: {
+              title: proposalTitles[i % proposalTitles.length],
+              description: `Em có ý tưởng làm về ${proposalTitles[i % proposalTitles.length]}. Đã tìm hiểu các công nghệ web cơ bản như React và Node.js. Mong thầy hướng dẫn thêm.`,
+              expectedOutcomes: 'Hoàn thiện ứng dụng và báo cáo chi tiết.',
+              semesterId: semester.id,
+              studentId: studentUser.studentProfile.id,
+              projectTypeId: baseProjectType.id,
+              requestedLecturerId: targetLecturer.lecturerProfile.id,
+              status: 'PENDING',
+            },
+          });
+          proposalCount++;
+        }
+      }
+    }
+    console.log(
+      `  demo proposals: ${proposalCount} (requested to ${targetLecturer.lecturerProfile.fullName})`,
     );
   }
 
