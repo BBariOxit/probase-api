@@ -357,7 +357,7 @@ async function main() {
 
   // Seed topic proposals for demo students
   const targetLecturer = await prisma.user.findUnique({
-    where: { email: 'gv002@probase.dev' },
+    where: { email: 'gv001@probase.dev' },
     include: { lecturerProfile: true },
   });
 
@@ -369,42 +369,40 @@ async function main() {
   ];
 
   if (targetLecturer?.lecturerProfile) {
-    const existingProposals = await prisma.topicProposal.count({
+    await prisma.topicProposal.deleteMany({
       where: { semesterId: semester.id },
     });
 
-    let proposalCount = existingProposals;
+    let proposalCount = 0;
 
-    if (existingProposals === 0) {
-      let baseProjectType = await prisma.projectType.findUnique({
-        where: { code: 'DACS' },
+    let baseProjectType = await prisma.projectType.findUnique({
+      where: { code: 'DACS' },
+    });
+    if (!baseProjectType) {
+      baseProjectType = (await prisma.projectType.findFirst())!;
+    }
+
+    for (let i = 0; i < DEMO_STUDENTS.length; i++) {
+      const studentEmail = DEMO_STUDENTS[i].email;
+      const studentUser = await prisma.user.findUnique({
+        where: { email: studentEmail },
+        include: { studentProfile: true },
       });
-      if (!baseProjectType) {
-        baseProjectType = (await prisma.projectType.findFirst())!;
-      }
 
-      for (let i = 0; i < DEMO_STUDENTS.length; i++) {
-        const studentEmail = DEMO_STUDENTS[i].email;
-        const studentUser = await prisma.user.findUnique({
-          where: { email: studentEmail },
-          include: { studentProfile: true },
+      if (studentUser?.studentProfile) {
+        await prisma.topicProposal.create({
+          data: {
+            title: proposalTitles[i % proposalTitles.length],
+            description: `Em có ý tưởng làm về ${proposalTitles[i % proposalTitles.length]}. Đã tìm hiểu các công nghệ web cơ bản như React và Node.js. Mong thầy hướng dẫn thêm.`,
+            expectedOutcomes: 'Hoàn thiện ứng dụng và báo cáo chi tiết.',
+            semesterId: semester.id,
+            studentId: studentUser.studentProfile.id,
+            projectTypeId: baseProjectType.id,
+            requestedLecturerId: targetLecturer.lecturerProfile.id,
+            status: 'PENDING',
+          },
         });
-
-        if (studentUser?.studentProfile) {
-          await prisma.topicProposal.create({
-            data: {
-              title: proposalTitles[i % proposalTitles.length],
-              description: `Em có ý tưởng làm về ${proposalTitles[i % proposalTitles.length]}. Đã tìm hiểu các công nghệ web cơ bản như React và Node.js. Mong thầy hướng dẫn thêm.`,
-              expectedOutcomes: 'Hoàn thiện ứng dụng và báo cáo chi tiết.',
-              semesterId: semester.id,
-              studentId: studentUser.studentProfile.id,
-              projectTypeId: baseProjectType.id,
-              requestedLecturerId: targetLecturer.lecturerProfile.id,
-              status: 'PENDING',
-            },
-          });
-          proposalCount++;
-        }
+        proposalCount++;
       }
     }
     console.log(
