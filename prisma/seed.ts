@@ -376,7 +376,7 @@ async function main() {
     let proposalCount = 0;
 
     let baseProjectType = await prisma.projectType.findUnique({
-      where: { code: 'DACS' },
+      where: { code: 'DATN' },
     });
     if (!baseProjectType) {
       baseProjectType = (await prisma.projectType.findFirst())!;
