@@ -1,40 +1,40 @@
-# Stage 1: Build
-FROM node:22-alpine AS builder
-
+FROM node:22-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache libc6-compat
 
-# Install dependencies
+# Development
+FROM base AS development
+ENV NODE_ENV=development \
+    CHOKIDAR_USEPOLLING=true \
+    WATCHPACK_POLLING=true
+
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npx prisma generate
+
+EXPOSE 3001
+CMD ["npm", "run", "start:dev"]
+
+# Build
+FROM base AS builder
 COPY package*.json ./
 RUN npm ci
-
-# Copy source code
 COPY . .
-
-# Generate Prisma client and build NestJS application
 RUN npx prisma generate
 RUN npm run build
 
-# Stage 2: Production
+# Production
 FROM node:22-alpine AS production
-
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy package files
 COPY package*.json ./
-
-# Install only production dependencies
 RUN npm ci --omit=dev
-
-# Copy Prisma schema and generated client from builder
 COPY --from=builder /app/prisma ./prisma
-# Prisma requires generate to run in the production image for native bindings to match
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/dist ./dist
 RUN npx prisma generate
 
-# Copy the built application from the builder stage
-COPY --from=builder /app/dist ./dist
-
-# Expose the API port
-EXPOSE 3000
-
-# Start the application
+EXPOSE 3001
 CMD ["npm", "run", "start:prod"]
