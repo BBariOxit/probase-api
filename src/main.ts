@@ -25,8 +25,12 @@ async function bootstrap() {
   if (hops > 0) app.set('trust proxy', hops);
 
   app.use(cookieParser());
+  const configuredOrigin = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+  const allowedOrigins = Array.from(
+    new Set([configuredOrigin, 'http://localhost']),
+  );
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 
